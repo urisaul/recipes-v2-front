@@ -14,6 +14,10 @@ const emptyRecipeForm = {
   prepTime: '',
   cookTime: '',
   servings: '',
+  calories: '',
+  fat: '',
+  protein: '',
+  carbs: '',
   recipePublic: false,
 };
 
@@ -79,6 +83,10 @@ export default function MyAccountPage() {
       prepTime: d.prep_time_minutes || '',
       cookTime: d.cook_time_minutes || '',
       servings: d.servings || '',
+      calories: d.calories || '',
+      fat: d.fat || '',
+      protein: d.protein || '',
+      carbs: d.carbs || '',
       recipePublic: d.privacy_setting === 'public',
     });
     const ing = Array.isArray(d.ingredients) ? d.ingredients : d.ingredients ? String(d.ingredients).split('\n').filter(Boolean) : [''];
@@ -107,6 +115,10 @@ export default function MyAccountPage() {
       prep_time_minutes: form.prepTime,
       cook_time_minutes: form.cookTime,
       servings: form.servings,
+      calories: form.calories,
+      fat: form.fat,
+      protein: form.protein,
+      carbs: form.carbs,
       ingredients: ingredients.map((i) => i.trim()).filter(Boolean).join('\n'),
       instructions: steps.map((s) => s.trim()).filter(Boolean).join('\n'),
       privacy_setting: form.recipePublic ? 'public' : 'private',
@@ -305,6 +317,25 @@ export default function MyAccountPage() {
                 <div className="form-group">
                   <label className="form-label" htmlFor="servings">Servings</label>
                   <input id="servings" type="number" className="form-input" min="1" value={form.servings} onChange={(e) => setForm((v) => ({ ...v, servings: e.target.value }))} placeholder="4" />
+                </div>
+              </div>
+
+              <div className="form-row" style={{ gridTemplateColumns: '1fr 1fr 1fr 1fr' }}>
+                <div className="form-group">
+                  <label className="form-label" htmlFor="calories">Calories</label>
+                  <input id="calories" type="text" className="form-input" value={form.calories} onChange={(e) => setForm((v) => ({ ...v, calories: e.target.value }))} placeholder="180" />
+                </div>
+                <div className="form-group">
+                  <label className="form-label" htmlFor="fat">Fat</label>
+                  <input id="fat" type="text" className="form-input" value={form.fat} onChange={(e) => setForm((v) => ({ ...v, fat: e.target.value }))} placeholder="14g" />
+                </div>
+                <div className="form-group">
+                  <label className="form-label" htmlFor="carbs">Carbs</label>
+                  <input id="carbs" type="text" className="form-input" value={form.carbs} onChange={(e) => setForm((v) => ({ ...v, carbs: e.target.value }))} placeholder="8g" />
+                </div>
+                <div className="form-group">
+                  <label className="form-label" htmlFor="protein">Protein</label>
+                  <input id="protein" type="text" className="form-input" value={form.protein} onChange={(e) => setForm((v) => ({ ...v, protein: e.target.value }))} placeholder="6g" />
                 </div>
               </div>
 

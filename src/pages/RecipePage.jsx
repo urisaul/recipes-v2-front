@@ -98,10 +98,16 @@ export default function RecipePage() {
       tags,
       ingredients,
       instructions: steps,
-      nutrition: { calories: '180', fat: '14g', carbs: '8g', protein: '6g' },
+      nutrition: { calories: p.calories, fat: p.fat, carbs: p.carbs, protein: p.protein },
     };
     sessionStorage.setItem('rb-print-recipe', JSON.stringify(recipeData));
-    window.open(`/recipe-print?showImage=${String(showImage)}&showNutrition=${String(showNutrition)}`, '_blank');
+    const params = new URLSearchParams({
+      showImage: String(showImage),
+      showNutrition: String(showNutrition),
+    });
+    const appBaseUrl = new URL(import.meta.env.BASE_URL, window.location.origin);
+    appBaseUrl.hash = `/recipe-print?${params.toString()}`;
+    window.open(appBaseUrl.toString(), '_blank');
     setPrintOpen(false);
   }
 
@@ -227,10 +233,10 @@ export default function RecipePage() {
                 <div className="card-header">Nutrition <span style={{ fontWeight: 400, fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>per serving</span></div>
                 <div className="card-body">
                   <div className="nutrition-grid">
-                    <div className="nutrition-item"><span className="nutrition-value">180</span><span className="nutrition-label">Calories</span></div>
-                    <div className="nutrition-item"><span className="nutrition-value">14g</span><span className="nutrition-label">Fat</span></div>
-                    <div className="nutrition-item"><span className="nutrition-value">8g</span><span className="nutrition-label">Carbs</span></div>
-                    <div className="nutrition-item"><span className="nutrition-value">6g</span><span className="nutrition-label">Protein</span></div>
+                    <div className="nutrition-item"><span className="nutrition-value">{p.calories || '—'}</span><span className="nutrition-label">Calories</span></div>
+                    <div className="nutrition-item"><span className="nutrition-value">{p.fat || '—'}</span><span className="nutrition-label">Fat</span></div>
+                    <div className="nutrition-item"><span className="nutrition-value">{p.carbs || '—'}</span><span className="nutrition-label">Carbs</span></div>
+                    <div className="nutrition-item"><span className="nutrition-value">{p.protein || '—'}</span><span className="nutrition-label">Protein</span></div>
                   </div>
                   <p className="form-hint">Estimates based on standard ingredients.</p>
                 </div>
