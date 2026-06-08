@@ -35,6 +35,7 @@ export default function MyAccountPage() {
   const [form, setForm] = useState(emptyRecipeForm);
   const [isSaving, setIsSaving] = useState(false);
   const [visibilityLoadingId, setVisibilityLoadingId] = useState('');
+  const [deleteLoadingId, setDeleteLoadingId] = useState('');
 
   useEffect(() => {
     (async () => {
@@ -167,12 +168,17 @@ export default function MyAccountPage() {
   }
 
   async function deleteRecipe(recipe) {
+    if (deleteLoadingId === recipe._id) return;
     if (!window.confirm('Delete this recipe? This cannot be undone.')) return;
     try {
+      setDeleteLoadingId(recipe._id);
       const api = await getApiClient();
       await api.auth.deleteData(recipe._id, { portalId: PORTAL_ID });
       await loadRecipes(api);
     } catch {}
+    finally {
+      setDeleteLoadingId('');
+    }
   }
 
   const publicCount = recipes.filter((r) => r.data?.privacy_setting === 'public').length;
@@ -226,6 +232,7 @@ export default function MyAccountPage() {
                 onToggleVisibility={() => toggleVisibility(recipe)}
                 onDelete={() => deleteRecipe(recipe)}
                 isVisibilityLoading={visibilityLoadingId === recipe._id}
+                isDeleteLoading={deleteLoadingId === recipe._id}
               />
             ))
           ) : (
