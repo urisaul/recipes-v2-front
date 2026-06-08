@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Recipes – RecipeBook</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- ===== Navbar ===== -->
+  <header class="navbar">
+    <div class="container nav-inner">
+      <a href="home.html" class="logo">🍴 RecipeBook</a>
+
+      <nav class="nav-links">
+        <a href="home.html" class="nav-link">Home</a>
+        <a href="my_account.html" class="nav-link active">My Recipes</a>
+        <a href="profile.html" class="nav-link">Profile</a>
+      </nav>
+
+      <div class="nav-actions">
+        <button class="theme-toggle" id="themeToggle" title="Toggle theme" aria-label="Toggle theme">☀️</button>
+        <a href="profile.html" class="nav-user" aria-label="My account">
+          <div class="avatar avatar--sm" id="navAvatar">?</div>
+          <span class="nav-user-name" id="navUserName"></span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== Page Header ===== -->
+  <div class="page-header">
+    <div class="container">
+      <div class="page-header-inner">
+        <div>
+          <h1 class="page-title">My Recipes</h1>
+          <p class="page-subtitle">Manage, edit, and share your personal cookbook</p>
+        </div>
+        <button class="btn btn-primary" id="openUploadModal">+ New Recipe</button>
+      </div>
+    </div>
+  </div>
+
+  <main class="container">
+
+    <!-- ===== Stats ===== -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-card-value" id="stat-total">–</div>
+        <div class="stat-card-label">Total recipes</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-value" id="stat-public">–</div>
+        <div class="stat-card-label">Public</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-value" id="stat-private">–</div>
+        <div class="stat-card-label">Private</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-value" id="stat-saves">–</div>
+        <div class="stat-card-label">Saves by others</div>
+      </div>
+    </div>
+
+    <!-- ===== Tabs ===== -->
+    <div class="tabs" role="tablist">
+      <button class="tab-btn active" role="tab" data-tab="all">All</button>
+      <button class="tab-btn" role="tab" data-tab="public">Public</button>
+      <button class="tab-btn" role="tab" data-tab="private">Private</button>
+    </div>
+
+    <!-- Tab: All -->
+    <div class="tab-panel active" id="tab-all">
+      <div class="recipe-list" id="recipeList">
+        <div class="empty-state">
+          <div class="empty-state-icon">⏳</div>
+          <div class="empty-state-title">Loading recipes…</div>
+        </div>
+      </div><!-- /.recipe-list -->
+    </div><!-- /#tab-all -->
+
+    <!-- Tab: Public -->
+    <div class="tab-panel" id="tab-public"></div>
+    <!-- Tab: Private -->
+    <div class="tab-panel" id="tab-private"></div>
+
+  </main>
+
+  <!-- ===== Footer ===== -->
+  <footer class="footer">
+    <div class="container footer-inner">
+      <span class="logo">🍴 RecipeBook</span>
+      <p class="footer-text">© 2026 RecipeBook. Share food, share love.</p>
+    </div>
+  </footer>
+
+  <!-- ===== Upload / Edit Recipe Modal ===== -->
+  <div class="modal-overlay" id="recipeModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modalTitle">New Recipe</h2>
+        <button class="modal-close" id="closeModal" aria-label="Close">✕</button>
+      </div>
+
+      <form id="recipeForm" novalidate>
+        <div class="modal-body">
+
+          <!-- Image upload -->
+          <div class="form-group">
+            <label class="form-label">Cover Photo</label>
+            <div class="file-upload-area" id="uploadArea">
+              <input type="file" id="coverPhoto" accept="image/*" />
+              <div class="file-upload-icon">📷</div>
+              <p class="file-upload-text">
+                Drag &amp; drop an image or <span>browse</span>
+              </p>
+              <img id="uploadPreview" class="upload-preview" alt="Preview" />
+            </div>
+          </div>
+
+          <!-- Title -->
+          <div class="form-group">
+            <label class="form-label" for="recipeTitle">Recipe Title <span style="color:var(--color-danger)">*</span></label>
+            <input type="text" class="form-input" id="recipeTitle" placeholder="e.g. Grandma's Lasagna" required />
+          </div>
+
+          <!-- Description -->
+          <div class="form-group">
+            <label class="form-label" for="recipeDesc">Description</label>
+            <textarea class="form-textarea" id="recipeDesc" placeholder="A short description of your recipe..." rows="3"></textarea>
+          </div>
+
+          <!-- Row: Category + Difficulty -->
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="recipeCategory">Category</label>
+              <select class="form-select" id="recipeCategory">
+                <option value="">Select category</option>
+                <option value="breakfast">Breakfast</option>
+                <option value="lunch">Lunch</option>
+                <option value="dinner">Dinner</option>
+                <option value="desserts">Desserts</option>
+                <option value="vegetarian">Vegetarian</option>
+                <option value="snacks">Snacks</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="recipeDifficulty">Difficulty</label>
+              <select class="form-select" id="recipeDifficulty">
+                <option value="easy">Easy</option>
+                <option value="medium">Medium</option>
+                <option value="hard">Advanced</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Row: Prep + Cook time + Servings -->
+          <div class="form-row" style="grid-template-columns: 1fr 1fr 1fr;">
+            <div class="form-group">
+              <label class="form-label" for="prepTime">Prep (min)</label>
+              <input type="number" class="form-input" id="prepTime" min="0" placeholder="10" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="cookTime">Cook (min)</label>
+              <input type="number" class="form-input" id="cookTime" min="0" placeholder="30" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="servings">Servings</label>
+              <input type="number" class="form-input" id="servings" min="1" placeholder="4" />
+            </div>
+          </div>
+
+          <!-- Ingredients -->
+          <div class="form-group">
+            <label class="form-label">Ingredients</label>
+            <div class="dynamic-list" id="ingredientsList">
+              <div class="dynamic-list-item">
+                <input type="text" class="form-input" placeholder="e.g. 2 cups flour" />
+                <button type="button" class="remove-item-btn" aria-label="Remove">−</button>
+              </div>
+              <div class="dynamic-list-item">
+                <input type="text" class="form-input" placeholder="e.g. 1 tsp salt" />
+                <button type="button" class="remove-item-btn" aria-label="Remove">−</button>
+              </div>
+            </div>
+            <button type="button" class="add-item-btn" id="addIngredient">+ Add ingredient</button>
+          </div>
+
+          <!-- Steps -->
+          <div class="form-group">
+            <label class="form-label">Instructions</label>
+            <div class="dynamic-list" id="stepsList">
+              <div class="dynamic-list-item">
+                <input type="text" class="form-input" placeholder="Step 1: Preheat oven to 180°C..." />
+                <button type="button" class="remove-item-btn" aria-label="Remove">−</button>
+              </div>
+            </div>
+            <button type="button" class="add-item-btn" id="addStep">+ Add step</button>
+          </div>
+
+          <!-- Privacy toggle -->
+          <div class="form-group">
+            <label class="form-label">Visibility</label>
+            <div class="toggle-wrap">
+              <label class="toggle-switch">
+                <input type="checkbox" id="recipePublic" />
+                <span class="toggle-slider"></span>
+              </label>
+              <span class="toggle-label" id="visibilityLabel">Private</span>
+            </div>
+            <p class="form-hint">Toggle on to make this recipe visible to everyone.</p>
+          </div>
+
+        </div><!-- /.modal-body -->
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" id="cancelModal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Recipe</button>
+        </div>
+      </form>
+    </div><!-- /.modal -->
+  </div><!-- /.modal-overlay -->
+
+  <script>
+    // --- Theme ---
+    const html = document.documentElement;
+    const themeToggle = document.getElementById('themeToggle');
+    const savedTheme = localStorage.getItem('rb-theme') || 'light';
+    html.setAttribute('data-theme', savedTheme);
+    themeToggle.textContent = savedTheme === 'dark' ? '🌙' : '☀️';
+
+    themeToggle.addEventListener('click', () => {
+      const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', next);
+      localStorage.setItem('rb-theme', next);
+      themeToggle.textContent = next === 'dark' ? '🌙' : '☀️';
+    });
+
+    // --- Tabs ---
+    function buildFilteredList(visibility) {
+      const items = document.querySelectorAll('#recipeList .recipe-list-item');
+      const container = document.getElementById(`tab-${visibility}`);
+      container.innerHTML = '';
+      const list = document.createElement('div');
+      list.className = 'recipe-list';
+      items.forEach(item => {
+        if (item.dataset.visibility === visibility) {
+          list.appendChild(item.cloneNode(true));
+        }
+      });
+      if (!list.children.length) {
+        list.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">${visibility === 'private' ? '🔒' : '🌐'}</div>
+            <div class="empty-state-title">No ${visibility} recipes yet</div>
+            <div class="empty-state-desc">Add a new recipe and set it to ${visibility}.</div>
+            <button class="btn btn-primary" onclick="openModal()">+ New Recipe</button>
+          </div>`;
+      }
+      container.appendChild(list);
+    }
+    buildFilteredList('public');
+    buildFilteredList('private');
+
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(`tab-${btn.dataset.tab}`).classList.add('active');
+      });
+    });
+
+    // --- Modal ---
+    const modal = document.getElementById('recipeModal');
+
+    function openModal() { modal.classList.add('open'); document.body.style.overflow = 'hidden'; }
+    function closeModal() { modal.classList.remove('open'); document.body.style.overflow = ''; }
+
+    document.getElementById('openUploadModal').addEventListener('click', () => {
+      document.getElementById('modalTitle').textContent = 'New Recipe';
+      document.getElementById('recipeForm').reset();
+      document.getElementById('recipeForm').dataset.editId = '';
+      document.getElementById('uploadPreview').style.display = 'none';
+      document.getElementById('visibilityLabel').textContent = 'Private';
+      resetDynamicList('ingredientsList', [], 'e.g. 2 cups flour');
+      resetDynamicList('stepsList',       [], 'Step 1: Preheat oven to 180°C…');
+      openModal();
+    });
+
+    document.getElementById('closeModal').addEventListener('click', closeModal);
+    document.getElementById('cancelModal').addEventListener('click', closeModal);
+
+    modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+    const _recipeCache = {};
+
+    function openEditModal(btn) {
+      document.getElementById('modalTitle').textContent = 'Edit Recipe';
+      const item = btn.closest('.recipe-list-item');
+      const cached = _recipeCache[item.dataset.id] || {};
+      const d = cached.data || {};
+      document.getElementById('recipeTitle').value      = d.recipe_name || '';
+      document.getElementById('recipeDesc').value       = d.description || '';
+      document.getElementById('recipeCategory').value   = d.category || '';
+      document.getElementById('recipeDifficulty').value = d.difficulty || 'easy';
+      document.getElementById('prepTime').value         = d.prep_time_minutes || '';
+      document.getElementById('cookTime').value         = d.cook_time_minutes || '';
+      document.getElementById('servings').value         = d.servings || '';
+      const ingList = document.getElementById('ingredientsList');
+      ingList.innerHTML = '';
+      const ings = Array.isArray(d.ingredients)
+        ? d.ingredients
+        : (d.ingredients ? d.ingredients.split('\n') : []);
+      (ings.length ? ings : ['']).forEach(ing => {
+        const div = document.createElement('div');
+        div.className = 'dynamic-list-item';
+        div.innerHTML = `<input type="text" class="form-input" placeholder="e.g. 1 cup sugar" value="${ing}" /><button type="button" class="remove-item-btn" aria-label="Remove">−</button>`;
+        ingList.appendChild(div);
+      });
+      const stepList = document.getElementById('stepsList');
+      stepList.innerHTML = '';
+      const stps = Array.isArray(d.instructions)
+        ? d.instructions
+        : (d.instructions ? d.instructions.split('\n') : []);
+      (stps.length ? stps : ['']).forEach((step, i) => {
+        const div = document.createElement('div');
+        div.className = 'dynamic-list-item';
+        div.innerHTML = `<input type="text" class="form-input" placeholder="Step ${i + 1}: …" /><button type="button" class="remove-item-btn" aria-label="Remove">−</button>`;
+        div.querySelector('input').value = step;
+        stepList.appendChild(div);
+      });
+      const isPublic = d.privacy_setting === 'public';
+      document.getElementById('recipePublic').checked = isPublic;
+      document.getElementById('visibilityLabel').textContent = isPublic ? 'Public' : 'Private';
+      document.getElementById('recipeForm').dataset.editId = cached._id || item.dataset.id || '';
+      document.getElementById('uploadPreview').style.display = 'none';
+      openModal();
+    }
+
+    // --- Visibility toggle ---
+    const publicToggle = document.getElementById('recipePublic');
+    const visLabel = document.getElementById('visibilityLabel');
+    publicToggle.addEventListener('change', () => {
+      visLabel.textContent = publicToggle.checked ? 'Public' : 'Private';
+    });
+
+    async function toggleVisibility(btn) {
+      const item = btn.closest('.recipe-list-item');
+      const badge = item.querySelector('.visibility-badge');
+      const isPublic = item.dataset.visibility === 'public';
+      item.dataset.visibility = isPublic ? 'private' : 'public';
+      badge.className = `visibility-badge visibility-badge--${isPublic ? 'private' : 'public'}`;
+      badge.textContent = isPublic ? '🔒 Private' : '🌐 Public';
+      btn.textContent   = isPublic ? '🔒' : '🌐';
+      const id = item.dataset.id;
+      if (id) {
+        try { await api.auth.updateData(id, { portalId: PORTAL_ID, data: { privacy_setting: isPublic ? 'private' : 'public' } }); }
+        catch (e) { console.error('Failed to update visibility', e); }
+      }
+    }
+
+    async function confirmDelete(btn) {
+      if (!confirm('Delete this recipe? This cannot be undone.')) return;
+      const item = btn.closest('.recipe-list-item');
+      const id = item.dataset.id;
+      item.remove();
+      if (id) {
+        try { await api.auth.deleteData(id, { portalId: PORTAL_ID }); }
+        catch (e) { console.error('Failed to delete recipe', e); }
+      }
+    }
+
+    // --- Dynamic list helpers ---
+    function resetDynamicList(listId, items, placeholder) {
+      const list = document.getElementById(listId);
+      list.innerHTML = '';
+      const vals = (items && items.length) ? items : [''];
+      vals.forEach(val => {
+        const div = document.createElement('div');
+        div.className = 'dynamic-list-item';
+        div.innerHTML = `<input type="text" class="form-input" placeholder="${placeholder}" /><button type="button" class="remove-item-btn" aria-label="Remove">−</button>`;
+        div.querySelector('input').value = val;
+        list.appendChild(div);
+      });
+    }
+
+    function addListItem(listId, placeholder) {
+      const list = document.getElementById(listId);
+      const div = document.createElement('div');
+      div.className = 'dynamic-list-item';
+      div.innerHTML = `
+        <input type="text" class="form-input" placeholder="${placeholder}" />
+        <button type="button" class="remove-item-btn" aria-label="Remove">−</button>`;
+      list.appendChild(div);
+      div.querySelector('input').focus();
+    }
+
+    document.getElementById('addIngredient').addEventListener('click', () =>
+      addListItem('ingredientsList', 'e.g. 1 cup sugar'));
+
+    document.getElementById('addStep').addEventListener('click', () => {
+      const count = document.getElementById('stepsList').children.length + 1;
+      addListItem('stepsList', `Step ${count}: …`);
+    });
+
+    document.addEventListener('click', e => {
+      if (e.target.classList.contains('remove-item-btn')) {
+        const list = e.target.closest('.dynamic-list');
+        if (list.children.length > 1) e.target.closest('.dynamic-list-item').remove();
+      }
+    });
+
+    // --- Image upload ---
+    const uploadArea = document.getElementById('uploadArea');
+    const coverPhoto = document.getElementById('coverPhoto');
+    const preview    = document.getElementById('uploadPreview');
+
+    uploadArea.addEventListener('click', () => coverPhoto.click());
+
+    uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.classList.add('drag-over'); });
+    uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('drag-over'));
+    uploadArea.addEventListener('drop', e => {
+      e.preventDefault();
+      uploadArea.classList.remove('drag-over');
+      const file = e.dataTransfer.files[0];
+      if (file && file.type.startsWith('image/')) showPreview(file);
+    });
+
+    coverPhoto.addEventListener('change', () => {
+      if (coverPhoto.files[0]) showPreview(coverPhoto.files[0]);
+    });
+
+    function showPreview(file) {
+      const url = URL.createObjectURL(file);
+      preview.src = url;
+      preview.style.display = 'block';
+    }
+
+    // --- Form submit ---
+    document.getElementById('recipeForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const title = document.getElementById('recipeTitle').value.trim();
+      if (!title) { alert('Please enter a recipe title.'); return; }
+
+      const ingredients = [...document.querySelectorAll('#ingredientsList .dynamic-list-item input')]
+        .map(i => i.value.trim()).filter(Boolean);
+
+      const steps = [...document.querySelectorAll('#stepsList .dynamic-list-item input')]
+        .map(i => i.value.trim()).filter(Boolean);
+
+      const recipeFields = {
+        recipe_name:       title,
+        description:       document.getElementById('recipeDesc').value.trim(),
+        category:          document.getElementById('recipeCategory').value,
+        difficulty:        document.getElementById('recipeDifficulty').value,
+        prep_time_minutes: document.getElementById('prepTime').value,
+        cook_time_minutes: document.getElementById('cookTime').value,
+        servings:          document.getElementById('servings').value,
+        ingredients:       ingredients.length ? ingredients.join('\n') : '',
+        instructions:      steps.length ? steps.join('\n') : '',
+        privacy_setting:   document.getElementById('recipePublic').checked ? 'public' : 'private',
+      };
+
+      const fd = new FormData();
+      fd.append('portalId', PORTAL_ID);
+      for (const [key, value] of Object.entries(recipeFields)) {
+        if (value !== '' && value !== null && value !== undefined) {
+          fd.append(`data[${key}]`, value);
+        }
+      }
+      const imageFile = document.getElementById('coverPhoto').files[0];
+      if (imageFile) fd.append('image', imageFile);
+
+      const editId = document.getElementById('recipeForm').dataset.editId;
+      try {
+        if (editId) {
+          await api.auth.updateData(editId, fd);
+        } else {
+          fd.append('objectId', RECIPES_OBJECT_ID);
+          await api.auth.createData(fd);
+        }
+        await loadRecipes();
+        closeModal();
+      } catch (err) {
+        alert(err.data?.message || 'Failed to save recipe.');
+      }
+    });
+  </script>
+  <script src="https://app.dande-link.com/scripts/portalApiClient.js"></script>
+  <script>
+    const api = new PortalApiClient('https://app.dande-link.com');
+
+    // Set this to your portal's recipe object ID
+    const RECIPES_OBJECT_ID = '6a22af007eebd3a3f9e691d5';
+    const PORTAL_ID = '6a22b4477eebd3a3f9e699a3';
+
+    function renderRecipeItem(r) {
+      _recipeCache[r._id] = r;
+      const d       = r.data || {};
+      const vis     = d.privacy_setting === 'public' ? 'public' : 'private';
+      const total   = (parseInt(d.prep_time_minutes) || 0) + (parseInt(d.cook_time_minutes) || 0);
+      const timeStr = total ? `${total} min` : '–';
+      const srv     = d.servings ? `${d.servings} servings` : '–';
+      const img     = d.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&h=160&fit=crop';
+      return `
+        <div class="recipe-list-item" data-visibility="${vis}" data-id="${r._id}">
+          <div class="recipe-list-img"><img src="${img}" alt="${d.recipe_name || ''}" loading="lazy" /></div>
+          <div class="recipe-list-body">
+            <div class="recipe-list-title">${d.recipe_name || ''}</div>
+            <p class="recipe-list-desc">${d.description || ''}</p>
+            <div class="recipe-list-meta">
+              <span>🕐 ${timeStr}</span>
+              <span>🍽 ${srv}</span>
+              <span>${d.difficulty || ''}</span>
+            </div>
+          </div>
+          <div class="recipe-list-actions">
+            <span class="visibility-badge visibility-badge--${vis}">${vis === 'public' ? '🌐 Public' : '🔒 Private'}</span>
+            <div class="recipe-list-action-row">
+              <button class="btn btn-outline btn-sm" onclick="openEditModal(this)">Edit</button>
+              <button class="btn-icon" title="Toggle visibility" onclick="toggleVisibility(this)">${vis === 'public' ? '🌐' : '🔒'}</button>
+              <button class="btn-icon" title="Delete recipe" onclick="confirmDelete(this)">🗑</button>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    async function loadRecipes() {
+      try {
+        const params  = { portalId: PORTAL_ID, objectId: RECIPES_OBJECT_ID, page: 1, limit: 100 };
+        const data    = await api.auth.getData(params);
+        const recipes = Array.isArray(data) ? data : (data?.data || data?.records || []);
+        const list    = document.getElementById('recipeList');
+        list.innerHTML = recipes.length
+          ? recipes.map(renderRecipeItem).join('')
+          : `<div class="empty-state">
+               <div class="empty-state-icon">🍴</div>
+               <div class="empty-state-title">No recipes yet</div>
+               <div class="empty-state-desc">Add your first recipe to get started.</div>
+               <button class="btn btn-primary" onclick="document.getElementById('openUploadModal').click()">+ New Recipe</button>
+             </div>`;
+        buildFilteredList('public');
+        buildFilteredList('private');
+        const pubCount  = recipes.filter(r => r.data?.privacy_setting === 'public').length;
+        const privCount = recipes.length - pubCount;
+        const saves     = recipes.reduce((sum, r) => sum + (r.data?.savedCount || r.data?.savesCount || (r.data?.savedBy?.length) || 0), 0);
+        document.getElementById('stat-total').textContent   = recipes.length;
+        document.getElementById('stat-public').textContent  = pubCount;
+        document.getElementById('stat-private').textContent = privCount;
+        document.getElementById('stat-saves').textContent   = saves;
+      } catch (err) {
+        console.warn('Could not load recipes:', err.message);
+      }
+    }
+
+    async function loadUser() {
+      try {
+        const user    = await api.auth.verifyToken();
+        const name    = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email || '';
+        const initial = name[0]?.toUpperCase() || '?';
+        document.getElementById('navAvatar').textContent   = initial;
+        document.getElementById('navUserName').textContent = user.firstName || name;
+      } catch {
+        window.location.href = 'login.html';
+      }
+    }
+
+    loadUser();
+    loadRecipes();
+  </script>
+</body>
+</html>

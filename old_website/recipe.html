@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Recipe – RecipeBook</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* ---- Recipe Detail Layout ---- */
+    .recipe-detail-layout {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: var(--space-2xl);
+      align-items: start;
+      padding: var(--space-2xl) 0 var(--space-3xl);
+    }
+
+    /* ---- Hero Image ---- */
+    .recipe-hero-img-wrap {
+      width: 100%;
+      aspect-ratio: 16 / 8;
+      overflow: hidden;
+      border-radius: var(--radius-xl);
+      background-color: var(--color-surface-2);
+      margin-bottom: var(--space-xl);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .recipe-hero-img-wrap::before {
+      content: '🍽';
+      font-size: 4rem;
+      opacity: 0.3;
+      position: absolute;
+    }
+
+    .recipe-hero-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      position: relative;
+    }
+
+    .recipe-hero-img:not([src]), .recipe-hero-img[src=''] {
+      opacity: 0;
+    }
+
+    /* ---- Meta row under title ---- */
+    .recipe-meta-row {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: var(--space-md);
+      margin: var(--space-md) 0 var(--space-xl);
+    }
+
+    .meta-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.875rem;
+      color: var(--color-text-secondary);
+      background-color: var(--color-surface-2);
+      padding: 5px 12px;
+      border-radius: var(--radius-full);
+      border: 1px solid var(--color-border);
+    }
+
+    /* ---- Author row ---- */
+    .recipe-author-row {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      margin-bottom: var(--space-xl);
+    }
+
+    .recipe-author-info { line-height: 1.3; }
+    .recipe-author-name { font-weight: 600; font-size: 0.9375rem; }
+    .recipe-author-label { font-size: 0.8125rem; color: var(--color-text-muted); }
+
+    /* ---- Description ---- */
+    .recipe-description {
+      font-size: 1rem;
+      color: var(--color-text-secondary);
+      line-height: 1.7;
+      margin-bottom: var(--space-2xl);
+    }
+
+    /* ---- Section headings ---- */
+    .content-section { margin-bottom: var(--space-2xl); }
+
+    .content-section-title {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: var(--space-md);
+      padding-bottom: var(--space-sm);
+      border-bottom: 2px solid var(--color-primary-light);
+    }
+
+    /* ---- Ingredients list ---- */
+    .ingredients-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-sm);
+    }
+
+    .ingredient-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      font-size: 0.9375rem;
+      padding: var(--space-sm) 0;
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .ingredient-item:last-child { border-bottom: none; }
+
+    .ingredient-check {
+      width: 18px;
+      height: 18px;
+      border: 2px solid var(--color-border);
+      border-radius: 4px;
+      flex-shrink: 0;
+      cursor: pointer;
+      accent-color: var(--color-primary);
+    }
+
+    /* ---- Steps list ---- */
+    .steps-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-lg);
+      counter-reset: step-counter;
+    }
+
+    .step-item {
+      display: flex;
+      gap: var(--space-md);
+      align-items: flex-start;
+    }
+
+    .step-number {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-full);
+      background-color: var(--color-primary);
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.875rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .step-text {
+      font-size: 0.9375rem;
+      line-height: 1.7;
+      padding-top: 5px;
+    }
+
+    /* ---- Sidebar ---- */
+    .recipe-sidebar {
+      position: sticky;
+      top: calc(var(--navbar-height) + var(--space-lg));
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-md);
+    }
+
+    /* Serving adjuster */
+    .serving-adjuster {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+
+    .serving-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-full);
+      border: 1.5px solid var(--color-border);
+      background-color: var(--color-surface);
+      font-size: 1.1rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--color-text-secondary);
+      transition: all var(--transition);
+    }
+
+    .serving-btn:hover {
+      border-color: var(--color-primary);
+      color: var(--color-primary);
+    }
+
+    .serving-count {
+      font-size: 1.125rem;
+      font-weight: 700;
+      min-width: 28px;
+      text-align: center;
+    }
+
+    /* Nutrition grid */
+    .nutrition-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-sm);
+    }
+
+    .nutrition-item {
+      background-color: var(--color-surface-2);
+      border-radius: var(--radius-md);
+      padding: var(--space-sm) var(--space-md);
+      text-align: center;
+    }
+
+    .nutrition-value {
+      font-size: 1.125rem;
+      font-weight: 700;
+      display: block;
+    }
+
+    .nutrition-label {
+      font-size: 0.75rem;
+      color: var(--color-text-muted);
+    }
+
+    /* Breadcrumb */
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: var(--space-xs);
+      font-size: 0.875rem;
+      color: var(--color-text-muted);
+      margin-bottom: var(--space-lg);
+    }
+
+    .breadcrumb a { color: var(--color-text-secondary); transition: color var(--transition); }
+    .breadcrumb a:hover { color: var(--color-primary); }
+    .breadcrumb-sep { color: var(--color-border); }
+
+    /* Recipe title */
+    .recipe-detail-title {
+      font-family: var(--font-display);
+      font-size: clamp(1.75rem, 4vw, 2.5rem);
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    /* Actions (save / share) */
+    .recipe-actions {
+      display: flex;
+      gap: var(--space-sm);
+      margin-top: var(--space-sm);
+    }
+
+    /* Tags */
+    .recipe-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-xs);
+      margin-bottom: var(--space-xl);
+    }
+
+    @media (max-width: 900px) {
+      .recipe-detail-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .recipe-sidebar {
+        position: static;
+        order: -1;
+      }
+
+      .recipe-hero-img-wrap {
+        aspect-ratio: 16 / 9;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .recipe-detail-layout { padding-top: var(--space-lg); }
+      .recipe-meta-row { gap: var(--space-sm); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===== Navbar ===== -->
+  <header class="navbar">
+    <div class="container nav-inner">
+      <a href="home.html" class="logo">🍴 RecipeBook</a>
+
+      <nav class="nav-links">
+        <a href="home.html" class="nav-link">Home</a>
+        <a href="my_account.html" class="nav-link">My Recipes</a>
+      </nav>
+
+      <div class="nav-actions">
+        <button class="theme-toggle" id="themeToggle" title="Toggle theme" aria-label="Toggle theme">☀️</button>
+        <a href="profile.html" class="nav-user" aria-label="My account">
+          <div class="avatar avatar--sm">J</div>
+          <span class="nav-user-name">Jane</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== Content ===== -->
+  <main class="container">
+
+    <!-- Breadcrumb -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a href="home.html">Home</a>
+      <span class="breadcrumb-sep">›</span>
+      <a href="home.html#browse">Browse</a>
+      <span class="breadcrumb-sep">›</span>
+      <span id="breadcrumbTitle"></span>
+    </nav>
+
+    <div class="recipe-detail-layout">
+
+      <!-- ===== Main Column ===== -->
+      <article>
+
+        <!-- Hero image -->
+        <div class="recipe-hero-img-wrap">
+          <img
+            id="recipeHeroImg"
+            src=""
+            alt=""
+            class="recipe-hero-img"
+          />
+        </div>
+
+        <!-- Title + actions -->
+        <h1 class="recipe-detail-title" id="recipeTitle"></h1>
+
+        <div class="recipe-actions">
+          <button class="btn btn-outline btn-sm" id="saveBtn">♡ Save</button>
+          <button class="btn btn-outline btn-sm" id="shareBtn">Share</button>
+          <button class="btn btn-outline btn-sm" id="printBtn">🖨 Print</button>
+          <!-- Shown only to recipe owner -->
+          <a href="my_account.html" class="btn btn-ghost btn-sm" id="editBtn">✎ Edit</a>
+        </div>
+
+        <!-- Meta chips -->
+        <div class="recipe-meta-row">
+          <span class="meta-chip">🕐 <span id="metaPrepTime"></span> min prep</span>
+          <span class="meta-chip">🔥 <span id="metaCookTime"></span> min cook</span>
+          <span class="meta-chip">🍽 <span id="metaServings"></span> servings</span>
+          <span class="recipe-badge" id="metaDifficulty" style="position:static;"></span>
+        </div>
+
+        <!-- Author -->
+        <div class="recipe-author-row">
+          <div class="avatar avatar--md" id="authorAvatar"></div>
+          <div class="recipe-author-info">
+            <div class="recipe-author-label">Recipe by</div>
+            <div class="recipe-author-name" id="recipeAuthor"></div>
+          </div>
+        </div>
+
+        <!-- Tags -->
+        <div class="recipe-tags" id="recipeTags"></div>
+
+        <!-- Description -->
+        <p class="recipe-description" id="recipeDescription"></p>
+
+        <!-- Ingredients -->
+        <section class="content-section">
+          <h2 class="content-section-title">Ingredients</h2>
+          <ul class="ingredients-list" id="ingredientsList"></ul>
+        </section>
+
+        <!-- Instructions -->
+        <section class="content-section">
+          <h2 class="content-section-title">Instructions</h2>
+          <ol class="steps-list" id="stepsList"></ol>
+        </section>
+
+      </article>
+
+      <!-- ===== Sidebar Column ===== -->
+      <aside class="recipe-sidebar">
+
+        <!-- Servings adjuster -->
+        <div class="card">
+          <div class="card-header">Servings</div>
+          <div class="card-body">
+            <div class="serving-adjuster">
+              <button class="serving-btn" id="decreaseServings" aria-label="Decrease servings">−</button>
+              <span class="serving-count" id="servingCount">4</span>
+              <button class="serving-btn" id="increaseServings" aria-label="Increase servings">+</button>
+            </div>
+            <p class="form-hint" style="margin-top:var(--space-xs);">Ingredient quantities update automatically.</p>
+          </div>
+        </div>
+
+        <!-- Time summary -->
+        <div class="card">
+          <div class="card-header">Time</div>
+          <div class="card-body" style="gap:var(--space-sm);">
+            <div style="display:flex; justify-content:space-between; font-size:0.9rem;">
+              <span style="color:var(--color-text-secondary);">Prep</span>
+              <span style="font-weight:600;" id="sidebarPrep"></span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:0.9rem;">
+              <span style="color:var(--color-text-secondary);">Cook</span>
+              <span style="font-weight:600;" id="sidebarCook"></span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:0.9rem; padding-top:var(--space-sm); border-top:1px solid var(--color-border);">
+              <span style="font-weight:600;">Total</span>
+              <span style="font-weight:700; color:var(--color-primary);" id="sidebarTotal"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Nutrition (per serving) -->
+        <div class="card">
+          <div class="card-header">Nutrition <span style="font-weight:400; font-size:0.8rem; color:var(--color-text-muted);">per serving</span></div>
+          <div class="card-body">
+            <div class="nutrition-grid">
+              <div class="nutrition-item">
+                <span class="nutrition-value">180</span>
+                <span class="nutrition-label">Calories</span>
+              </div>
+              <div class="nutrition-item">
+                <span class="nutrition-value">14g</span>
+                <span class="nutrition-label">Fat</span>
+              </div>
+              <div class="nutrition-item">
+                <span class="nutrition-value">8g</span>
+                <span class="nutrition-label">Carbs</span>
+              </div>
+              <div class="nutrition-item">
+                <span class="nutrition-value">6g</span>
+                <span class="nutrition-label">Protein</span>
+              </div>
+            </div>
+            <p class="form-hint">Estimates based on standard ingredients.</p>
+          </div>
+        </div>
+
+        <!-- Save / share CTA -->
+        <button class="btn btn-primary" id="saveBtnSidebar" style="width:100%; justify-content:center; padding:11px;">
+          ♡ Save Recipe
+        </button>
+        <button class="btn btn-outline" id="shareBtnSidebar" style="width:100%; justify-content:center; padding:11px;">
+          Share
+        </button>
+
+      </aside>
+
+    </div>
+  </main>
+
+  <!-- ===== Footer ===== -->
+  <footer class="footer">
+    <div class="container footer-inner">
+      <span class="logo">🍴 RecipeBook</span>
+      <p class="footer-text">© 2026 RecipeBook. Share food, share love.</p>
+    </div>
+  </footer>
+
+  <!-- ===== Print Settings Modal ===== -->
+  <div class="modal-overlay" id="printModal" role="dialog" aria-modal="true" aria-labelledby="printModalTitle">
+    <div class="modal" style="max-width:400px;">
+      <div class="modal-header">
+        <h2 class="modal-title" id="printModalTitle">🖨 Print Settings</h2>
+        <button class="modal-close" id="closePrintModal" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body" style="gap:var(--space-md);">
+        <label style="display:flex; align-items:center; gap:var(--space-sm); font-size:0.9375rem; cursor:pointer;">
+          <input type="checkbox" id="printShowImage" checked style="width:18px; height:18px; accent-color:var(--color-primary); cursor:pointer;" />
+          Include recipe image
+        </label>
+        <label style="display:flex; align-items:center; gap:var(--space-sm); font-size:0.9375rem; cursor:pointer;">
+          <input type="checkbox" id="printShowNutrition" checked style="width:18px; height:18px; accent-color:var(--color-primary); cursor:pointer;" />
+          Include nutrition info
+        </label>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost btn-sm" id="cancelPrintBtn">Cancel</button>
+        <button class="btn btn-primary btn-sm" id="confirmPrintBtn">Print Recipe</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Share Modal ===== -->
+  <div class="modal-overlay" id="shareModal" role="dialog" aria-modal="true" aria-labelledby="shareModalTitle">
+    <div class="modal" style="max-width:420px;">
+      <div class="modal-header">
+        <h2 class="modal-title" id="shareModalTitle">Share Recipe</h2>
+        <button class="modal-close" id="closeShareModal" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body" style="gap:var(--space-sm);">
+        <p style="font-size:0.9rem; color:var(--color-text-secondary);">Copy the link to share this recipe:</p>
+        <div style="display:flex; gap:var(--space-sm);">
+          <input type="text" class="form-input" id="shareUrl" readonly style="font-size:0.875rem;" />
+          <button class="btn btn-primary btn-sm" id="copyLinkBtn">Copy</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://app.dande-link.com/scripts/portalApiClient.js"></script>
+  <script>
+    const api = new PortalApiClient('https://app.dande-link.com');
+  </script>
+  <script>
+    // --- Theme ---
+    const html = document.documentElement;
+    const themeToggle = document.getElementById('themeToggle');
+    const savedTheme = localStorage.getItem('rb-theme') || 'light';
+    html.setAttribute('data-theme', savedTheme);
+    themeToggle.textContent = savedTheme === 'dark' ? '🌙' : '☀️';
+
+    themeToggle.addEventListener('click', () => {
+      const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', next);
+      localStorage.setItem('rb-theme', next);
+      themeToggle.textContent = next === 'dark' ? '🌙' : '☀️';
+    });
+
+    // --- Serving adjuster ---
+    let servings = 4;
+    let baseServings = 4;
+
+    document.getElementById('increaseServings').addEventListener('click', () => {
+      servings++;
+      updateServings();
+    });
+
+    document.getElementById('decreaseServings').addEventListener('click', () => {
+      if (servings <= 1) return;
+      servings--;
+      updateServings();
+    });
+
+    function updateServings() {
+      document.getElementById('servingCount').textContent = servings;
+      document.getElementById('metaServings').textContent = servings;
+      // Scale each ingredient quantity shown in the list
+      document.querySelectorAll('.ingredient-item span').forEach(span => {
+        const text = span.dataset.base || span.textContent;
+        span.dataset.base = text;
+        // Simple scaling: replace leading numbers/fractions
+        const scaled = scaleIngredient(text, servings / baseServings);
+        span.textContent = scaled;
+      });
+    }
+
+    function scaleIngredient(text, factor) {
+      // Replace the first number (integer or decimal) found in the string
+      return text.replace(/(\d+(\.\d+)?)/g, (match) => {
+        const scaled = parseFloat(match) * factor;
+        return Number.isInteger(scaled) ? scaled : scaled.toFixed(1).replace(/\.0$/, '');
+      });
+    }
+
+    // --- Save toggle ---
+    let saved = false;
+    async function toggleSave() {
+      saved = !saved;
+      const label = saved ? '♥ Saved' : '♡ Save';
+      document.getElementById('saveBtn').textContent = label;
+      document.getElementById('saveBtnSidebar').textContent = label;
+      if (recipeId) {
+        try {
+          if (saved) {
+            await api.auth.createData({ savedRecipeId: recipeId });
+          }
+          // Unsave would need the saved-record ID; extend as needed
+        } catch (e) { console.warn('Save toggle failed', e); }
+      }
+    }
+
+    document.getElementById('saveBtn').addEventListener('click', toggleSave);
+    document.getElementById('saveBtnSidebar').addEventListener('click', toggleSave);
+
+    // --- Share modal ---
+    const shareModal = document.getElementById('shareModal');
+
+    function openShare() {
+      document.getElementById('shareUrl').value = window.location.href;
+      shareModal.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeShare() {
+      shareModal.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    document.getElementById('shareBtn').addEventListener('click', openShare);
+    document.getElementById('shareBtnSidebar').addEventListener('click', openShare);
+    document.getElementById('closeShareModal').addEventListener('click', closeShare);
+    shareModal.addEventListener('click', e => { if (e.target === shareModal) closeShare(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeShare(); });
+
+    document.getElementById('copyLinkBtn').addEventListener('click', () => {
+      const input = document.getElementById('shareUrl');
+      navigator.clipboard.writeText(input.value).catch(() => {
+        input.select();
+        document.execCommand('copy');
+      });
+      document.getElementById('copyLinkBtn').textContent = 'Copied!';
+      setTimeout(() => { document.getElementById('copyLinkBtn').textContent = 'Copy'; }, 2000);
+    });
+
+    // --- Print modal ---
+    const printModal = document.getElementById('printModal');
+
+    function openPrintModal() {
+      printModal.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closePrintModal() {
+      printModal.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    document.getElementById('printBtn').addEventListener('click', openPrintModal);
+    document.getElementById('closePrintModal').addEventListener('click', closePrintModal);
+    document.getElementById('cancelPrintBtn').addEventListener('click', closePrintModal);
+    printModal.addEventListener('click', e => { if (e.target === printModal) closePrintModal(); });
+
+    document.getElementById('confirmPrintBtn').addEventListener('click', () => {
+      const showImage     = document.getElementById('printShowImage').checked;
+      const showNutrition = document.getElementById('printShowNutrition').checked;
+
+      // Collect current recipe state from the DOM
+      const recipeData = {
+        title:       document.getElementById('recipeTitle').textContent,
+        description: document.getElementById('recipeDescription').textContent,
+        prepTime:    document.getElementById('metaPrepTime').textContent,
+        cookTime:    document.getElementById('metaCookTime').textContent,
+        servings:    document.getElementById('servingCount').textContent,
+        author:      document.getElementById('recipeAuthor').textContent,
+        difficulty:  document.getElementById('metaDifficulty').textContent,
+        image:       document.getElementById('recipeHeroImg').src,
+        tags: Array.from(document.querySelectorAll('.recipe-tags .tag-pill')).map(t => t.textContent),
+        ingredients:  Array.from(document.querySelectorAll('#ingredientsList .ingredient-item span')).map(s => s.textContent),
+        instructions: Array.from(document.querySelectorAll('#stepsList .step-text')).map(s => s.textContent),
+        nutrition: {
+          calories: document.querySelector('.nutrition-item:nth-child(1) .nutrition-value')?.textContent || '',
+          fat:      document.querySelector('.nutrition-item:nth-child(2) .nutrition-value')?.textContent || '',
+          carbs:    document.querySelector('.nutrition-item:nth-child(3) .nutrition-value')?.textContent || '',
+          protein:  document.querySelector('.nutrition-item:nth-child(4) .nutrition-value')?.textContent || '',
+        }
+      };
+
+      sessionStorage.setItem('rb-print-recipe', JSON.stringify(recipeData));
+
+      const params = new URLSearchParams({ showImage, showNutrition });
+      const printWin = window.open(`recipe-print.html?${params}`, '_blank');
+      closePrintModal();
+    });
+
+    // --- Load recipe data via URL param ---
+    const params = new URLSearchParams(window.location.search);
+    const recipeId = params.get('id');
+    if (recipeId) {
+      (async () => {
+        try {
+          const [recipeData, catData] = await Promise.all([
+            fetch(`https://app.dande-link.com/public-data/6a22b2637eebd3a3f9e698c5?id=${recipeId}`).then(res => res.json()),
+            fetch('https://app.dande-link.com/public-data/6a267e24f63c3e33a8d5fc48').then(res => res.json()).catch(() => [])
+          ]);
+          const catRecords  = Array.isArray(catData) ? catData : (catData?.data || catData?.records || []);
+          const catMap      = Object.fromEntries(catRecords.map(c => [c._id, c.properties?.category_name || c._id]));
+          const data    = recipeData;
+          const records = Array.isArray(data) ? data : (data?.data || data?.records || []);
+          const r       = records.find(item => item._id === recipeId) || records[0];
+          if (!r) return;
+          const p = r.properties || {};
+
+          const title = p.recipe_name || '';
+          document.getElementById('recipeTitle').textContent     = title;
+          document.getElementById('breadcrumbTitle').textContent = title;
+          document.title = `${title} – RecipeBook`;
+
+          if (p.description) document.getElementById('recipeDescription').textContent = p.description;
+
+          if (p.prep_time_minutes) {
+            document.getElementById('metaPrepTime').textContent = p.prep_time_minutes;
+            document.getElementById('sidebarPrep').textContent  = `${p.prep_time_minutes} min`;
+          }
+          if (p.cook_time_minutes) {
+            document.getElementById('metaCookTime').textContent = p.cook_time_minutes;
+            document.getElementById('sidebarCook').textContent  = `${p.cook_time_minutes} min`;
+          }
+          if (p.prep_time_minutes && p.cook_time_minutes) {
+            document.getElementById('sidebarTotal').textContent = `${(parseInt(p.prep_time_minutes) || 0) + (parseInt(p.cook_time_minutes) || 0)} min`;
+          }
+          if (p.servings) {
+            document.getElementById('metaServings').textContent = p.servings;
+            document.getElementById('servingCount').textContent = p.servings;
+            servings     = parseInt(p.servings) || 4;
+            baseServings = servings;
+          }
+          if (p.image) document.getElementById('recipeHeroImg').src = p.image;
+
+          if (p.author) {
+            document.getElementById('recipeAuthor').textContent = p.author;
+            document.getElementById('authorAvatar').textContent = p.author.charAt(0).toUpperCase();
+          }
+
+          const diffMap   = { easy: 'easy', medium: 'medium', hard: 'hard', advanced: 'hard' };
+          const diff      = (p.complexity_level || '').toLowerCase();
+          const badge     = document.getElementById('metaDifficulty');
+          badge.textContent = p.complexity_level || '';
+          badge.className   = `recipe-badge recipe-badge--${diffMap[diff] || 'easy'}`;
+          badge.style.position = 'static';
+
+          if (Array.isArray(p.recipecategories) && p.recipecategories.length) {
+            document.getElementById('recipeTags').innerHTML = p.recipecategories.map(tag => {
+              const name = catMap[tag] || tag;
+              return `<span class="tag-pill active" style="pointer-events:none;">${name}</span>`;
+            }).join('');
+          }
+
+          const ingredients = Array.isArray(p.ingredients)
+            ? p.ingredients
+            : (p.ingredients ? p.ingredients.split('\n').filter(Boolean) : []);
+          if (ingredients.length) {
+            document.getElementById('ingredientsList').innerHTML = ingredients.map(ing =>
+              `<li class="ingredient-item"><input type="checkbox" class="ingredient-check" aria-label="Check off ingredient" /><span>${ing}</span></li>`
+            ).join('');
+          }
+          const steps = Array.isArray(p.instructions)
+            ? p.instructions
+            : (p.instructions ? p.instructions.split('\n').filter(Boolean) : []);
+          if (steps.length) {
+            document.getElementById('stepsList').innerHTML = steps.map((step, i) =>
+              `<li class="step-item"><div class="step-number">${i + 1}</div><p class="step-text">${step}</p></li>`
+            ).join('');
+          }
+        } catch {
+          const main = document.querySelector('main');
+          if (main) {
+            main.insertAdjacentHTML('afterbegin', '<div style="margin:var(--space-lg) auto;max-width:640px;padding:var(--space-md) var(--space-lg);background:var(--color-danger-bg);color:var(--color-danger-text);border-radius:var(--radius-md);font-size:0.9rem;font-weight:500;">Could not load the recipe. Please check the link or try again later.</div>');
+          }
+        }
+      })();
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Print Recipe – RecipeBook</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ---- Base ---- */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    img { max-width: 100%; display: block; }
+    ul, ol { list-style: none; }
+
+    :root {
+      --color-primary: #D96B3E;
+      --color-primary-light: #F5E8E0;
+      --color-text: #1A1917;
+      --color-text-secondary: #6B7280;
+      --color-text-muted: #9CA3AF;
+      --color-border: #E8E5E0;
+      --color-surface-2: #F3F2EF;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-display: 'Playfair Display', Georgia, serif;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      color: var(--color-text);
+      background: #fff;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ---- Screen-only toolbar ---- */
+    .print-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 32px;
+      background: #fff;
+      border-bottom: 1px solid var(--color-border);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .print-toolbar-logo {
+      font-family: var(--font-display);
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--color-primary);
+    }
+
+    .print-toolbar-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .toolbar-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: var(--font-sans);
+      transition: all 0.2s ease;
+      border: 1.5px solid var(--color-border);
+      background: #fff;
+      color: var(--color-text);
+    }
+
+    .toolbar-btn:hover {
+      border-color: var(--color-primary);
+      color: var(--color-primary);
+    }
+
+    .toolbar-btn--primary {
+      background: var(--color-primary);
+      color: #fff;
+      border-color: var(--color-primary);
+    }
+
+    .toolbar-btn--primary:hover {
+      background: #BF5A30;
+      border-color: #BF5A30;
+      color: #fff;
+    }
+
+    /* ---- Print page content ---- */
+    .print-page {
+      max-width: 800px;
+      margin: 32px auto;
+      padding: 0 32px 48px;
+    }
+
+    /* ---- Header ---- */
+    .print-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 8px;
+    }
+
+    .print-title {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      font-weight: 700;
+      line-height: 1.2;
+      flex: 1;
+    }
+
+    .print-logo-mark {
+      font-family: var(--font-display);
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: var(--color-primary);
+      white-space: nowrap;
+      padding-top: 6px;
+    }
+
+    /* ---- Meta strip ---- */
+    .print-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 12px 0 16px;
+    }
+
+    .print-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.8125rem;
+      color: var(--color-text-secondary);
+      background: var(--color-surface-2);
+      border: 1px solid var(--color-border);
+      padding: 4px 10px;
+      border-radius: 999px;
+    }
+
+    /* ---- Author & Tags ---- */
+    .print-author {
+      font-size: 0.875rem;
+      color: var(--color-text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .print-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+
+    .print-tag {
+      font-size: 0.75rem;
+      background: var(--color-primary-light);
+      color: var(--color-primary);
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-weight: 500;
+    }
+
+    /* ---- Hero image ---- */
+    .print-hero {
+      width: 100%;
+      aspect-ratio: 16 / 7;
+      overflow: hidden;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: var(--color-surface-2);
+    }
+
+    .print-hero::before {
+      content: '🍽';
+      font-size: 4rem;
+      opacity: 0.3;
+      position: absolute;
+    }
+
+    .print-hero img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      position: relative;
+    }
+
+    .print-hero img:not([src]), .print-hero img[src=''] {
+      opacity: 0;
+    }
+
+    /* ---- Description ---- */
+    .print-description {
+      font-size: 0.9375rem;
+      color: var(--color-text-secondary);
+      line-height: 1.7;
+      margin-bottom: 24px;
+      border-left: 3px solid var(--color-primary);
+      padding-left: 14px;
+    }
+
+    /* ---- Two-column body ---- */
+    .print-body {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      gap: 32px;
+      align-items: start;
+    }
+
+    /* ---- Section headings ---- */
+    .print-section-title {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+      padding-bottom: 6px;
+      border-bottom: 2px solid var(--color-primary-light);
+    }
+
+    /* ---- Ingredients ---- */
+    .print-ingredients {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .print-ingredient {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 0.875rem;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--color-border);
+      line-height: 1.4;
+    }
+
+    .print-ingredient:last-child { border-bottom: none; }
+
+    .print-ingredient::before {
+      content: '';
+      width: 14px;
+      height: 14px;
+      border: 1.5px solid var(--color-border);
+      border-radius: 3px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    /* ---- Nutrition ---- */
+    .print-nutrition {
+      margin-top: 20px;
+    }
+
+    .print-nutrition-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .print-nutrition-item {
+      background: var(--color-surface-2);
+      border-radius: 8px;
+      padding: 8px 10px;
+      text-align: center;
+    }
+
+    .print-nutrition-value {
+      font-size: 1rem;
+      font-weight: 700;
+      display: block;
+    }
+
+    .print-nutrition-label {
+      font-size: 0.7rem;
+      color: var(--color-text-muted);
+    }
+
+    /* ---- Steps ---- */
+    .print-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      counter-reset: step-counter;
+    }
+
+    .print-step {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .print-step-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--color-primary);
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.8125rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .print-step-text {
+      font-size: 0.9375rem;
+      line-height: 1.65;
+      padding-top: 4px;
+    }
+
+    /* ---- Loading / error states ---- */
+    .print-loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 60vh;
+      gap: 16px;
+      color: var(--color-text-secondary);
+      font-size: 0.9375rem;
+    }
+
+    .print-spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid var(--color-border);
+      border-top-color: var(--color-primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ============================================================
+       PRINT STYLES
+       ============================================================ */
+    @media print {
+      .print-toolbar { display: none !important; }
+
+      body { background: #fff; }
+
+      .print-page {
+        max-width: 100%;
+        margin: 0;
+        padding: 0 0 20mm;
+      }
+
+      .print-header { page-break-after: avoid; }
+      .print-hero   { page-break-after: avoid; }
+
+      .print-body {
+        grid-template-columns: 200px 1fr;
+        gap: 24px;
+      }
+
+      .print-step { page-break-inside: avoid; }
+
+      .print-ingredients { page-break-inside: avoid; }
+    }
+
+    /* ---- Responsive ---- */
+    @media (max-width: 600px) {
+      .print-body {
+        grid-template-columns: 1fr;
+      }
+      .print-page { padding: 0 16px 32px; }
+      .print-toolbar { padding: 12px 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===== Screen toolbar ===== -->
+  <div class="print-toolbar">
+    <span class="print-toolbar-logo">🍴 RecipeBook</span>
+    <div class="print-toolbar-actions">
+      <button class="toolbar-btn" id="closeBtn" onclick="window.close()">✕ Close</button>
+      <button class="toolbar-btn toolbar-btn--primary" id="printNowBtn" onclick="window.print()">🖨 Print</button>
+    </div>
+  </div>
+
+  <!-- ===== Content ===== -->
+  <main class="print-page" id="printContent">
+    <div class="print-loading" id="loadingState">
+      <div class="print-spinner"></div>
+      <span>Preparing recipe…</span>
+    </div>
+  </main>
+
+  <script>
+    const params      = new URLSearchParams(window.location.search);
+    const showImage   = params.get('showImage') !== 'false';
+    const showNutrition = params.get('showNutrition') !== 'false';
+
+    const raw = sessionStorage.getItem('rb-print-recipe');
+    const r   = raw ? JSON.parse(raw) : null;
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function render(r) {
+      const totalMin = (parseInt(r.prepTime) || 0) + (parseInt(r.cookTime) || 0);
+
+      const tagsHtml = (r.tags || []).map(t =>
+        `<span class="print-tag">${escapeHtml(t)}</span>`
+      ).join('');
+
+      const heroHtml = showImage && r.image
+        ? `<div class="print-hero"><img src="${escapeHtml(r.image)}" alt="${escapeHtml(r.title)}" /></div>`
+        : '';
+
+      const ingredientsHtml = (Array.isArray(r.ingredients)
+        ? r.ingredients
+        : (r.ingredients ? r.ingredients.split('\n').filter(Boolean) : [])
+      ).map(ing =>
+        `<li class="print-ingredient">${escapeHtml(ing)}</li>`
+      ).join('');
+
+      const nutritionHtml = showNutrition
+        ? `<div class="print-nutrition">
+            <h3 class="print-section-title">Nutrition <small style="font-weight:400; font-size:0.75rem; color:var(--color-text-muted);">per serving</small></h3>
+            <div class="print-nutrition-grid">
+              <div class="print-nutrition-item"><span class="print-nutrition-value">${escapeHtml(r.nutrition?.calories || '—')}</span><span class="print-nutrition-label">Calories</span></div>
+              <div class="print-nutrition-item"><span class="print-nutrition-value">${escapeHtml(r.nutrition?.fat || '—')}</span><span class="print-nutrition-label">Fat</span></div>
+              <div class="print-nutrition-item"><span class="print-nutrition-value">${escapeHtml(r.nutrition?.carbs || '—')}</span><span class="print-nutrition-label">Carbs</span></div>
+              <div class="print-nutrition-item"><span class="print-nutrition-value">${escapeHtml(r.nutrition?.protein || '—')}</span><span class="print-nutrition-label">Protein</span></div>
+            </div>
+          </div>`
+        : '';
+
+      const stepsHtml = (Array.isArray(r.instructions)
+        ? r.instructions
+        : (r.instructions ? r.instructions.split('\n').filter(Boolean) : [])
+      ).map((step, i) =>
+        `<li class="print-step">
+          <div class="print-step-num">${i + 1}</div>
+          <p class="print-step-text">${escapeHtml(step)}</p>
+        </li>`
+      ).join('');
+
+      document.getElementById('printContent').innerHTML = `
+        <div class="print-header">
+          <h1 class="print-title">${escapeHtml(r.title)}</h1>
+          <span class="print-logo-mark">🍴 RecipeBook</span>
+        </div>
+
+        <div class="print-meta">
+          <span class="print-chip">🕐 ${escapeHtml(String(r.prepTime))} min prep</span>
+          <span class="print-chip">🔥 ${escapeHtml(String(r.cookTime))} min cook</span>
+          <span class="print-chip">⏱ ${totalMin} min total</span>
+          <span class="print-chip">🍽 ${escapeHtml(String(r.servings))} servings</span>
+          ${r.difficulty ? `<span class="print-chip">📊 ${escapeHtml(r.difficulty)}</span>` : ''}
+        </div>
+
+        ${r.author ? `<p class="print-author">Recipe by <strong>${escapeHtml(r.author)}</strong></p>` : ''}
+
+        ${tagsHtml ? `<div class="print-tags">${tagsHtml}</div>` : ''}
+
+        ${heroHtml}
+
+        ${r.description ? `<p class="print-description">${escapeHtml(r.description)}</p>` : ''}
+
+        <div class="print-body">
+          <!-- Left: Ingredients + Nutrition -->
+          <div>
+            <h2 class="print-section-title">Ingredients</h2>
+            <ul class="print-ingredients">${ingredientsHtml}</ul>
+            ${nutritionHtml}
+          </div>
+
+          <!-- Right: Steps -->
+          <div>
+            <h2 class="print-section-title">Instructions</h2>
+            <ol class="print-steps">${stepsHtml}</ol>
+          </div>
+        </div>
+      `;
+
+      document.title = `${r.title} – Print`;
+    }
+
+    if (r) {
+      render(r);
+      // Small delay so fonts & images have time to load before print dialog
+      setTimeout(() => window.print(), 600);
+    } else {
+      document.getElementById('printContent').innerHTML = `
+        <div class="print-loading">
+          <span style="font-size:2rem;">🍴</span>
+          <p>No recipe data found. Please open this page from the Recipe page.</p>
+          <button onclick="window.close()" style="margin-top:8px; padding:8px 20px; background:var(--color-primary); color:#fff; border:none; border-radius:8px; font-size:0.875rem; cursor:pointer; font-family:inherit;">Close</button>
+        </div>`;
+    }
+  </script>
+</body>
+</html>

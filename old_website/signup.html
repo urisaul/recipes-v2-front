@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign Up – RecipeBook</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .auth-page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .auth-body {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-xl) var(--space-md);
+    }
+
+    .auth-card {
+      background-color: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-xl);
+      padding: var(--space-2xl);
+      width: 100%;
+      max-width: 460px;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .auth-logo {
+      text-align: center;
+      margin-bottom: var(--space-xl);
+    }
+
+    .auth-logo-text {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--color-primary);
+    }
+
+    .auth-title {
+      font-size: 1.375rem;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: var(--space-xs);
+    }
+
+    .auth-subtitle {
+      text-align: center;
+      color: var(--color-text-secondary);
+      font-size: 0.9rem;
+      margin-bottom: var(--space-xl);
+    }
+
+    .auth-form {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-md);
+    }
+
+    .auth-divider {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      margin: var(--space-sm) 0;
+      color: var(--color-text-muted);
+      font-size: 0.8125rem;
+    }
+
+    .auth-divider::before,
+    .auth-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background-color: var(--color-border);
+    }
+
+    .btn-social {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-sm);
+      width: 100%;
+      padding: 10px var(--space-md);
+      border: 1.5px solid var(--color-border);
+      border-radius: var(--radius-md);
+      font-size: 0.9rem;
+      font-weight: 500;
+      background-color: var(--color-surface);
+      color: var(--color-text);
+      cursor: pointer;
+      transition: all var(--transition);
+      font-family: var(--font-sans);
+    }
+
+    .btn-social:hover {
+      border-color: var(--color-primary);
+      background-color: var(--color-primary-light);
+    }
+
+    .btn-social-icon {
+      font-size: 1.1rem;
+      line-height: 1;
+    }
+
+    .auth-footer-text {
+      text-align: center;
+      font-size: 0.875rem;
+      color: var(--color-text-secondary);
+      margin-top: var(--space-lg);
+    }
+
+    .auth-link {
+      color: var(--color-primary);
+      font-weight: 500;
+      transition: opacity var(--transition);
+    }
+
+    .auth-link:hover { opacity: 0.75; }
+
+    .terms-note {
+      font-size: 0.8rem;
+      color: var(--color-text-muted);
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    .terms-note a { color: var(--color-primary); }
+
+    .form-error {
+      font-size: 0.8125rem;
+      color: var(--color-danger);
+      display: none;
+    }
+
+    .password-field-wrap {
+      position: relative;
+    }
+
+    .password-toggle {
+      position: absolute;
+      right: var(--space-md);
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.875rem;
+      color: var(--color-text-muted);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .password-toggle:hover { color: var(--color-text); }
+    .password-field-wrap .form-input { padding-right: 48px; }
+
+    /* Password strength bar */
+    .strength-bar-wrap {
+      height: 4px;
+      background-color: var(--color-border);
+      border-radius: var(--radius-full);
+      overflow: hidden;
+      margin-top: var(--space-xs);
+    }
+
+    .strength-bar {
+      height: 100%;
+      width: 0;
+      border-radius: var(--radius-full);
+      transition: width 0.3s ease, background-color 0.3s ease;
+    }
+
+    .strength-label {
+      font-size: 0.75rem;
+      color: var(--color-text-muted);
+      margin-top: 2px;
+    }
+
+    .alert {
+      padding: var(--space-sm) var(--space-md);
+      border-radius: var(--radius-md);
+      font-size: 0.875rem;
+      font-weight: 500;
+      display: none;
+    }
+
+    .alert--error {
+      background: var(--color-danger-bg);
+      color: var(--color-danger-text);
+    }
+
+    @media (max-width: 480px) {
+      .auth-card { padding: var(--space-xl) var(--space-md); }
+    }
+  </style>
+</head>
+<body class="auth-page">
+
+  <!-- ===== Navbar ===== -->
+  <header class="navbar">
+    <div class="container nav-inner">
+      <a href="home.html" class="logo">🍴 RecipeBook</a>
+      <div class="nav-actions" style="margin-left:auto;">
+        <button class="theme-toggle" id="themeToggle" title="Toggle theme" aria-label="Toggle theme">☀️</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== Auth Body ===== -->
+  <main class="auth-body">
+    <div class="auth-card">
+
+      <div class="auth-logo">
+        <span class="auth-logo-text">🍴 RecipeBook</span>
+      </div>
+
+      <h1 class="auth-title">Create your account</h1>
+      <p class="auth-subtitle">Start sharing your favorite recipes today</p>
+
+      <div class="alert alert--error" id="signupError"></div>
+
+      <form class="auth-form" id="signupForm" novalidate>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="firstName">First Name</label>
+            <input
+              type="text"
+              class="form-input"
+              id="firstName"
+              placeholder="Jane"
+              autocomplete="given-name"
+              required
+            />
+            <span class="form-error" id="firstNameError">Required.</span>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="lastName">Last Name</label>
+            <input
+              type="text"
+              class="form-input"
+              id="lastName"
+              placeholder="Doe"
+              autocomplete="family-name"
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="username">Username</label>
+          <input
+            type="text"
+            class="form-input"
+            id="username"
+            placeholder="janedoe"
+            autocomplete="username"
+            required
+          />
+          <span class="form-hint">This will be your public profile URL.</span>
+          <span class="form-error" id="usernameError">Username is required and must be at least 3 characters.</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="email">Email</label>
+          <input
+            type="email"
+            class="form-input"
+            id="email"
+            placeholder="you@example.com"
+            autocomplete="email"
+            required
+          />
+          <span class="form-error" id="emailError">Please enter a valid email address.</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="password">Password</label>
+          <div class="password-field-wrap">
+            <input
+              type="password"
+              class="form-input"
+              id="password"
+              placeholder="At least 8 characters"
+              autocomplete="new-password"
+              required
+            />
+            <span class="password-toggle" data-target="password">Show</span>
+          </div>
+          <div class="strength-bar-wrap">
+            <div class="strength-bar" id="strengthBar"></div>
+          </div>
+          <span class="strength-label" id="strengthLabel"></span>
+          <span class="form-error" id="passwordError">Password must be at least 8 characters.</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="confirmPassword">Confirm Password</label>
+          <div class="password-field-wrap">
+            <input
+              type="password"
+              class="form-input"
+              id="confirmPassword"
+              placeholder="Repeat your password"
+              autocomplete="new-password"
+              required
+            />
+            <span class="password-toggle" data-target="confirmPassword">Show</span>
+          </div>
+          <span class="form-error" id="confirmError">Passwords do not match.</span>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; padding:11px;">
+          Create Account
+        </button>
+
+        <p class="terms-note">
+          By signing up you agree to our
+          <a href="terms.html">Terms of Service</a> and <a href="privacy.html">Privacy Policy</a>.
+        </p>
+
+      </form>
+
+      <p class="auth-footer-text">
+        Already have an account? <a href="login.html" class="auth-link">Log in</a>
+      </p>
+
+    </div>
+  </main>
+
+  <!-- ===== Footer ===== -->
+  <footer class="footer">
+    <div class="container footer-inner">
+      <p class="footer-text">© 2026 RecipeBook. Share food, share love.</p>
+    </div>
+  </footer>
+
+  <script>
+    // --- Theme ---
+    const html = document.documentElement;
+    const themeToggle = document.getElementById('themeToggle');
+    const savedTheme = localStorage.getItem('rb-theme') || 'light';
+    html.setAttribute('data-theme', savedTheme);
+    themeToggle.textContent = savedTheme === 'dark' ? '🌙' : '☀️';
+
+    themeToggle.addEventListener('click', () => {
+      const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', next);
+      localStorage.setItem('rb-theme', next);
+      themeToggle.textContent = next === 'dark' ? '🌙' : '☀️';
+    });
+
+    // --- Show/hide password ---
+    document.querySelectorAll('.password-toggle').forEach(toggle => {
+      toggle.addEventListener('click', () => {
+        const input = document.getElementById(toggle.dataset.target);
+        const isHidden = input.type === 'password';
+        input.type = isHidden ? 'text' : 'password';
+        toggle.textContent = isHidden ? 'Hide' : 'Show';
+      });
+    });
+
+    // --- Password strength ---
+    const strengthColors = ['#ef4444', '#f97316', '#eab308', '#22c55e'];
+    const strengthLabels = ['Weak', 'Fair', 'Good', 'Strong'];
+
+    document.getElementById('password').addEventListener('input', function () {
+      const val = this.value;
+      let score = 0;
+      if (val.length >= 8)              score++;
+      if (/[A-Z]/.test(val))            score++;
+      if (/[0-9]/.test(val))            score++;
+      if (/[^A-Za-z0-9]/.test(val))     score++;
+
+      const bar   = document.getElementById('strengthBar');
+      const label = document.getElementById('strengthLabel');
+
+      if (!val) {
+        bar.style.width = '0';
+        label.textContent = '';
+        return;
+      }
+
+      bar.style.width = `${(score / 4) * 100}%`;
+      bar.style.backgroundColor = strengthColors[score - 1] || strengthColors[0];
+      label.textContent = strengthLabels[score - 1] || 'Weak';
+    });
+
+    // --- Form validation & submit ---
+    function showError(id, show) {
+      document.getElementById(id).style.display = show ? 'block' : 'none';
+    }
+
+    document.getElementById('signupForm').addEventListener('submit', async e => {
+      e.preventDefault();
+
+      const firstName = document.getElementById('firstName').value.trim();
+      const username  = document.getElementById('username').value.trim();
+      const email     = document.getElementById('email').value.trim();
+      const password  = document.getElementById('password').value;
+      const confirm   = document.getElementById('confirmPassword').value;
+
+      let valid = true;
+
+      if (!firstName) { showError('firstNameError', true); valid = false; }
+      else              showError('firstNameError', false);
+
+      if (!username || username.length < 3) { showError('usernameError', true); valid = false; }
+      else                                    showError('usernameError', false);
+
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        showError('emailError', true); valid = false;
+      } else {
+        showError('emailError', false);
+      }
+
+      if (!password || password.length < 8) { showError('passwordError', true); valid = false; }
+      else                                    showError('passwordError', false);
+
+      if (password !== confirm) { showError('confirmError', true); valid = false; }
+      else                        showError('confirmError', false);
+
+      if (!valid) return;
+
+      const errBanner = document.getElementById('signupError');
+      errBanner.style.display = 'none';
+
+      try {
+        const lastName = document.getElementById('lastName').value.trim();
+        await api.auth.registerIndependent({ firstName, lastName, username, email, password });
+        window.location.href = 'my_account.html';
+      } catch (err) {
+        errBanner.textContent = err.data?.message || 'Registration failed. Please try again.';
+        errBanner.style.display = 'block';
+      }
+    });
+
+
+  </script>
+  <script src="https://app.dande-link.com/scripts/portalApiClient.js"></script>
+  <script>
+    const api = new PortalApiClient('https://app.dande-link.com');
+  </script>
+</body>
+</html>

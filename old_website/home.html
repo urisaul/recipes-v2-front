@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RecipeBook – Discover Recipes</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+
+    <!-- ===== Navbar ===== -->
+    <header class="navbar">
+        <div class="container nav-inner">
+            <a href="home.html" class="logo">🍴 RecipeBook</a>
+
+            <nav class="nav-links">
+                <a href="home.html" class="nav-link active">Home</a>
+                <a href="#browse" class="nav-link">Browse</a>
+            </nav>
+
+            <div class="nav-actions">
+                <button class="theme-toggle" id="themeToggle" title="Toggle theme" aria-label="Toggle theme">☀️</button>
+                <a href="login.html" class="btn btn-ghost">Log in</a>
+                <a href="signup.html" class="btn btn-primary">Sign up</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- ===== Hero ===== -->
+    <section class="hero">
+        <div class="container">
+            <h1 class="hero-title">Discover &amp; Share<br />Amazing Recipes</h1>
+            <p class="hero-subtitle">Explore recipes from home cooks all around the world</p>
+
+            <div class="search-bar" role="search">
+                <input type="text" class="search-input" id="searchInput" placeholder="Search recipes, ingredients..."
+                    aria-label="Search recipes" />
+                <button class="btn btn-primary search-btn" id="searchBtn">Search</button>
+            </div>
+
+            <div class="hero-tags" id="categoryTags" role="group" aria-label="Filter by category">
+                <button class="tag-pill active" data-category="all">All</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== Recipe Grid ===== -->
+    <main class="container" id="browse">
+        <div class="section-header">
+            <h2 class="section-title">Latest Recipes</h2>
+            <select class="sort-select" id="sortSelect" aria-label="Sort recipes">
+                <option value="newest">Newest first</option>
+                <option value="popular">Most popular</option>
+                <option value="quickest">Quickest to make</option>
+            </select>
+        </div>
+
+        <div class="recipes-loader" id="recipesLoader" aria-label="Loading recipes" role="status">
+            <span class="recipes-loader__spinner"></span>
+        </div>
+
+        <div class="recipes-grid" id="recipesGrid"></div><!-- /.recipes-grid -->
+        <p class="recipes-empty" id="recipesEmpty" hidden>No recipes found for the current filter.</p>
+
+        <div class="load-more-wrap">
+            <button class="btn btn-outline" id="loadMoreBtn">Load more recipes</button>
+        </div>
+    </main>
+
+    <!-- ===== Footer ===== -->
+    <footer class="footer">
+        <div class="container footer-inner">
+            <span class="logo">🍴 RecipeBook</span>
+            <p class="footer-text">© 2026 RecipeBook. Share food, share love.</p>
+        </div>
+    </footer>
+
+    <script>
+        // --- Theme ---
+        const html = document.documentElement;
+        const themeToggle = document.getElementById('themeToggle');
+        const saved = localStorage.getItem('rb-theme') || 'light';
+        html.setAttribute('data-theme', saved);
+        themeToggle.textContent = saved === 'dark' ? '🌙' : '☀️';
+
+        themeToggle.addEventListener('click', () => {
+            const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', next);
+            localStorage.setItem('rb-theme', next);
+            themeToggle.textContent = next === 'dark' ? '🌙' : '☀️';
+        });
+
+        // --- Unified filter (search + category) ---
+        function applyFilters() {
+            const query = document.getElementById('searchInput').value.toLowerCase().trim();
+            const activeCategory = document.querySelector('.tag-pill.active')?.dataset.category || 'all';
+            let visibleCount = 0;
+            document.querySelectorAll('.recipe-card').forEach(card => {
+                const title = card.querySelector('.recipe-card-title').textContent.toLowerCase();
+                const desc  = card.querySelector('.recipe-card-desc').textContent.toLowerCase();
+                const cats  = card.dataset.category || '';
+                const matchesCategory = activeCategory === 'all' || cats.includes(activeCategory);
+                const matchesSearch   = !query || title.includes(query) || desc.includes(query);
+                const visible = matchesCategory && matchesSearch;
+                card.style.display = visible ? '' : 'none';
+                if (visible) visibleCount++;
+            });
+            document.getElementById('recipesEmpty').hidden = visibleCount > 0;
+        }
+
+        // --- Category filter (event delegation) ---
+        document.getElementById('categoryTags').addEventListener('click', e => {
+            const pill = e.target.closest('.tag-pill');
+            if (!pill) return;
+            document.querySelectorAll('.tag-pill').forEach(p => p.classList.remove('active'));
+            pill.classList.add('active');
+            applyFilters();
+        });
+
+        // --- Search (real-time) ---
+        document.getElementById('searchInput').addEventListener('input', applyFilters);
+        document.getElementById('searchBtn').addEventListener('click', applyFilters);
+    </script>
+    <script src="https://app.dande-link.com/scripts/portalApiClient.js"></script>
+    <script>
+        const api = new PortalApiClient('https://app.dande-link.com');
+
+        // --- Load public recipes ---
+        const diffClass = { easy: 'easy', medium: 'medium', hard: 'hard', advanced: 'hard' };
+        let currentPage = 1;
+        let allRecipes = [];
+
+        function sortRecipes(recipes) {
+            const sort = document.getElementById('sortSelect').value;
+            const sorted = [...recipes];
+            if (sort === 'newest') {
+                sorted.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            } else if (sort === 'popular') {
+                sorted.sort((a, b) => (b.properties?.views || 0) - (a.properties?.views || 0));
+            } else if (sort === 'quickest') {
+                sorted.sort((a, b) => {
+                    const ta = (parseInt(a.properties?.prep_time_minutes) || 0) + (parseInt(a.properties?.cook_time_minutes) || 0);
+                    const tb = (parseInt(b.properties?.prep_time_minutes) || 0) + (parseInt(b.properties?.cook_time_minutes) || 0);
+                    if (!ta && !tb) return 0;
+                    if (!ta) return 1;
+                    if (!tb) return -1;
+                    return ta - tb;
+                });
+            }
+            return sorted;
+        }
+
+        function renderAll() {
+            document.getElementById('recipesGrid').innerHTML = sortRecipes(allRecipes).map(renderRecipeCard).join('');
+            applyFilters();
+        }
+
+        function renderRecipeCard(r) {
+            const p          = r.properties || {};
+            const img        = p.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=260&fit=crop';
+            const total      = (parseInt(p.prep_time_minutes) || 0) + (parseInt(p.cook_time_minutes) || 0);
+            const timeStr    = total ? `${total} min` : '';
+            const servings   = p.servings ? `${p.servings} servings` : '';
+            const diff       = (p.complexity_level || '').toLowerCase();
+            const badgeCls   = diffClass[diff] || 'easy';
+            const badgeLabel = p.complexity_level || 'Easy';
+            const category   = (p.recipecategories || []).join(' ');
+            const author     = p.author || '';
+            const avatarLetter = author ? author.charAt(0).toUpperCase() : '';
+            return `
+            <article class="recipe-card" data-category="${category}">
+                <a href="recipe.html?id=${r._id}" class="recipe-card-img-wrap">
+                    <img src="${img}" alt="${p.recipe_name}" class="recipe-card-img" loading="lazy" />
+                    <span class="recipe-badge recipe-badge--${badgeCls}">${badgeLabel}</span>
+                </a>
+                <div class="recipe-card-body">
+                    <div class="recipe-card-meta">
+                        ${timeStr  ? `<span class="meta-item">🕐 ${timeStr}</span>` : ''}
+                        ${servings ? `<span class="meta-item">🍽 ${servings}</span>` : ''}
+                    </div>
+                    <h3 class="recipe-card-title"><a href="recipe.html?id=${r._id}">${p.recipe_name}</a></h3>
+                    <p class="recipe-card-desc">${p.description || ''}</p>
+                    ${author ? `
+                    <div class="recipe-card-footer">
+                        <div class="recipe-author">
+                            <div class="avatar avatar--sm">${avatarLetter}</div>
+                            <span>${author}</span>
+                        </div>
+                    </div>` : ''}
+                </div>
+            </article>`;
+        }
+
+        async function loadRecipes(page, replace = false) {
+            const loadMoreBtn = document.getElementById('loadMoreBtn');
+            const loader      = document.getElementById('recipesLoader');
+            loadMoreBtn.disabled = true;
+            loadMoreBtn.textContent = 'Loading…';
+            if (replace) loader.style.display = 'flex';
+            try {
+                const data    = await fetch(`https://app.dande-link.com/public-data/6a22b2637eebd3a3f9e698c5?page=${page}`).then(r => r.json());
+                const recipes = Array.isArray(data) ? data : (data?.data || data?.records || []);
+                allRecipes = replace ? recipes : [...allRecipes, ...recipes];
+                renderAll();
+                if (!recipes.length) {
+                    loadMoreBtn.textContent = 'No more recipes';
+                    loadMoreBtn.disabled = true;
+                    loader.style.display = 'none';
+                    return;
+                }
+            } catch (err) {
+                console.warn('Could not load public recipes:', err.message);
+            }
+            loader.style.display = 'none';
+            loadMoreBtn.disabled = false;
+            loadMoreBtn.textContent = 'Load more recipes';
+        }
+
+        // --- Load categories ---
+        async function loadCategories() {
+            try {
+                const data       = await fetch('https://app.dande-link.com/public-data/6a267e24f63c3e33a8d5fc48').then(r => r.json());
+                const categories = Array.isArray(data) ? data : (data?.data || data?.records || []);
+                const container  = document.getElementById('categoryTags');
+                const filtered   = categories.filter(cat => (cat.properties?.category_name || '').toLowerCase() !== 'all');
+                container.insertAdjacentHTML('beforeend', filtered.map(cat => {
+                    const name = cat.properties?.category_name || '';
+                    return `<button class="tag-pill" data-category="${cat._id}">${name}</button>`;
+                }).join(''));
+            } catch (err) {
+                console.warn('Could not load categories:', err.message);
+            }
+        }
+
+        loadCategories();
+        loadRecipes(currentPage, true);
+        document.getElementById('sortSelect').addEventListener('change', renderAll);
+
+        document.getElementById('loadMoreBtn').addEventListener('click', () => {
+            currentPage += 1;
+            loadRecipes(currentPage);
+        });
+
+        // --- Auth check: swap Login/Signup for user nav when already logged in ---
+        (async () => {
+            try {
+                const user = await api.auth.verifyToken();
+                const name    = user.name || user.firstName || user.email || '';
+                const initial = name[0]?.toUpperCase() || '?';
+                // Hide the login/signup buttons
+                document.querySelectorAll('.nav-actions .btn').forEach(el => el.style.display = 'none');
+                // Append user avatar link
+                const userEl = document.createElement('a');
+                userEl.href = 'profile.html';
+                userEl.className = 'nav-user';
+                userEl.setAttribute('aria-label', 'My account');
+                userEl.innerHTML = `<div class="avatar avatar--sm">${initial}</div><span class="nav-user-name">${name}</span>`;
+                document.querySelector('.nav-actions').appendChild(userEl);
+            } catch {
+                // Not logged in – keep existing login/signup buttons
+            }
+        })();
+    </script>
+</body>
+
+</html>

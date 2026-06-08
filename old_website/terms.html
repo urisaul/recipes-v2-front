@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Terms of Service – RecipeBook</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .legal-body {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: var(--space-3xl) var(--space-md);
+    }
+    .legal-body h1 {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      margin-bottom: var(--space-xs);
+    }
+    .legal-body .updated {
+      font-size: 0.875rem;
+      color: var(--color-text-muted);
+      margin-bottom: var(--space-2xl);
+    }
+    .legal-body h2 {
+      font-size: 1.125rem;
+      font-weight: 700;
+      margin-top: var(--space-2xl);
+      margin-bottom: var(--space-sm);
+    }
+    .legal-body p {
+      font-size: 0.9375rem;
+      line-height: 1.75;
+      color: var(--color-text-secondary);
+      margin-bottom: var(--space-md);
+    }
+    .legal-body ul {
+      padding-left: var(--space-lg);
+      margin-bottom: var(--space-md);
+    }
+    .legal-body li {
+      font-size: 0.9375rem;
+      line-height: 1.75;
+      color: var(--color-text-secondary);
+      margin-bottom: var(--space-xs);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===== Navbar ===== -->
+  <header class="navbar">
+    <div class="container nav-inner">
+      <a href="home.html" class="logo">🍴 RecipeBook</a>
+      <div class="nav-actions" style="margin-left:auto;">
+        <button class="theme-toggle" id="themeToggle" title="Toggle theme" aria-label="Toggle theme">☀️</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="legal-body">
+      <h1>Terms of Service</h1>
+      <p class="updated">Last updated: June 2026</p>
+
+      <p>Welcome to RecipeBook. By accessing or using our service, you agree to be bound by these Terms of Service. Please read them carefully.</p>
+
+      <h2>1. Acceptance of Terms</h2>
+      <p>By creating an account or using RecipeBook, you agree to these terms. If you do not agree, please do not use the service.</p>
+
+      <h2>2. Your Account</h2>
+      <p>You are responsible for maintaining the security of your account and all activity that occurs under it. You must provide accurate information when registering and keep it up to date.</p>
+
+      <h2>3. Content You Share</h2>
+      <p>You retain ownership of the recipes and content you post. By publishing a recipe publicly, you grant RecipeBook a non-exclusive license to display it on the platform. You are responsible for ensuring your content does not infringe third-party rights.</p>
+
+      <h2>4. Prohibited Conduct</h2>
+      <ul>
+        <li>Do not post content that is harmful, misleading, or illegal.</li>
+        <li>Do not attempt to access other users' accounts or data.</li>
+        <li>Do not use the service for spam or automated scraping.</li>
+        <li>Do not reverse-engineer or attempt to compromise the platform's security.</li>
+      </ul>
+
+      <h2>5. Service Availability</h2>
+      <p>We strive to keep RecipeBook available at all times, but we cannot guarantee uninterrupted access. We reserve the right to modify or discontinue the service at any time with reasonable notice.</p>
+
+      <h2>6. Account Termination</h2>
+      <p>We may suspend or terminate accounts that violate these terms. You may also request deletion of your account at any time by contacting us at <a href="mailto:support@recipebook.app">support@recipebook.app</a>.</p>
+
+      <h2>7. Limitation of Liability</h2>
+      <p>RecipeBook is provided "as is" without warranties of any kind. We are not liable for any indirect, incidental, or consequential damages arising from your use of the service.</p>
+
+      <h2>8. Changes to These Terms</h2>
+      <p>We may update these terms from time to time. Continued use of the service after changes are posted constitutes your acceptance of the revised terms.</p>
+
+      <h2>9. Contact</h2>
+      <p>For questions about these terms, email us at <a href="mailto:support@recipebook.app">support@recipebook.app</a>.</p>
+    </div>
+  </main>
+
+  <!-- ===== Footer ===== -->
+  <footer class="footer">
+    <div class="container footer-inner">
+      <span class="logo">🍴 RecipeBook</span>
+      <p class="footer-text">© 2026 RecipeBook. Share food, share love.</p>
+      <nav style="display:flex; gap:var(--space-md);">
+        <a href="terms.html" class="footer-link" style="font-weight:600;">Terms</a>
+        <a href="privacy.html" class="footer-link">Privacy</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script>
+    const html = document.documentElement;
+    const themeToggle = document.getElementById('themeToggle');
+    const savedTheme = localStorage.getItem('rb-theme') || 'light';
+    html.setAttribute('data-theme', savedTheme);
+    themeToggle.textContent = savedTheme === 'dark' ? '🌙' : '☀️';
+    themeToggle.addEventListener('click', () => {
+      const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', next);
+      localStorage.setItem('rb-theme', next);
+      themeToggle.textContent = next === 'dark' ? '🌙' : '☀️';
+    });
+  </script>
+
+</body>
+</html>

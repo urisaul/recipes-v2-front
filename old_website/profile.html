@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Profile – RecipeBook</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* Page-specific additions */
+    .page-content {
+      padding-bottom: var(--space-3xl);
+    }
+
+    .save-bar {
+      position: sticky;
+      bottom: 0;
+      background-color: color-mix(in srgb, var(--color-surface) 95%, transparent);
+      border-top: 1px solid var(--color-border);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      padding: var(--space-md) var(--space-lg);
+      display: flex;
+      justify-content: flex-end;
+      gap: var(--space-sm);
+      z-index: 50;
+    }
+
+    .alert {
+      padding: var(--space-sm) var(--space-md);
+      border-radius: var(--radius-md);
+      font-size: 0.875rem;
+      font-weight: 500;
+      display: none;
+    }
+
+    .alert--success {
+      background: var(--color-success-bg);
+      color: var(--color-success-text);
+    }
+
+    .alert--error {
+      background: var(--color-danger-bg);
+      color: var(--color-danger-text);
+    }
+
+    .avatar-input { display: none; }
+
+    .password-field-wrap {
+      position: relative;
+    }
+
+    .password-toggle {
+      position: absolute;
+      right: var(--space-md);
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.875rem;
+      color: var(--color-text-muted);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .password-toggle:hover {
+      color: var(--color-text);
+    }
+
+    .password-field-wrap .form-input {
+      padding-right: 48px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===== Navbar ===== -->
+  <header class="navbar">
+    <div class="container nav-inner">
+      <a href="home.html" class="logo">🍴 RecipeBook</a>
+
+      <nav class="nav-links">
+        <a href="home.html" class="nav-link">Home</a>
+        <a href="my_account.html" class="nav-link">My Recipes</a>
+        <a href="profile.html" class="nav-link active">Profile</a>
+      </nav>
+
+      <div class="nav-actions">
+        <button class="theme-toggle" id="themeToggle" title="Toggle theme" aria-label="Toggle theme">☀️</button>
+        <a href="profile.html" class="nav-user" aria-label="My account">
+          <div class="avatar avatar--sm"></div>
+          <span class="nav-user-name"></span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== Page Header ===== -->
+  <div class="page-header">
+    <div class="container">
+      <div class="page-header-inner">
+        <div>
+          <h1 class="page-title">Profile &amp; Settings</h1>
+          <p class="page-subtitle">Manage your account details and preferences</p>
+        </div>
+        <a href="my_account.html" class="btn btn-outline">← My Recipes</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Two-column Layout ===== -->
+  <div class="container page-content">
+    <div class="profile-layout">
+
+      <!-- ===== Sidebar ===== -->
+      <aside class="profile-sidebar">
+        <div class="profile-avatar-wrap">
+          <div class="avatar avatar--xl" id="sidebarAvatar"></div>
+          <button class="profile-avatar-edit-btn" id="avatarEditBtn" title="Change photo" aria-label="Change profile photo">✎</button>
+          <input type="file" class="avatar-input" id="avatarInput" accept="image/*" />
+        </div>
+
+        <div class="profile-name"></div>
+        <div class="profile-username"></div>
+
+        <p class="profile-bio" id="sidebarBio"></p>
+
+        <div class="profile-stats">
+          <div class="profile-stat">
+            <span class="profile-stat-value" id="recipesCount">--</span>
+            <span class="profile-stat-label">Recipes</span>
+          </div>
+          <div class="profile-stat">
+            <span class="profile-stat-value" id="savesCount">--</span>
+            <span class="profile-stat-label">Saves</span>
+          </div>
+        </div>
+      </aside>
+
+      <!-- ===== Main content ===== -->
+      <div class="profile-main">
+
+        <!-- Alert banner -->
+        <div class="alert alert--success" id="successAlert">✓ Changes saved successfully.</div>
+        <div class="alert alert--error"   id="errorAlert">Something went wrong. Please try again.</div>
+
+        <!-- Edit Profile -->
+        <div class="card">
+          <div class="card-header">Edit Profile</div>
+          <div class="card-body">
+            <form id="profileForm" novalidate>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" for="firstName">First Name</label>
+                  <input type="text" class="form-input" id="firstName" value="" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="lastName">Last Name</label>
+                  <input type="text" class="form-input" id="lastName" value=""/>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="username">Username</label>
+                <input type="text" class="form-input" id="username" value="" />
+                <span class="form-hint">Your public profile URL: recipebook.app/@janedoe</span>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="email">Email Address</label>
+                <input type="email" class="form-input" id="email" value="" />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="bio">Bio</label>
+                <textarea
+                  class="form-textarea"
+                  id="bio"
+                  rows="3"
+                  maxlength="200"
+                  placeholder="Tell others a bit about your cooking style..."
+                ></textarea>
+                <span class="form-hint"><span id="bioCount">0</span>/200 characters</span>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" for="website">Website (optional)</label>
+                  <input type="url" class="form-input" id="website" placeholder="https://yourblog.com" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="instagram">Instagram (optional)</label>
+                  <input type="text" class="form-input" id="instagram" placeholder="@handle" />
+                </div>
+              </div>
+
+              <div style="display:flex; justify-content:flex-end;">
+                <button type="submit" class="btn btn-primary">Save Profile</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Change Password -->
+        <div class="card">
+          <div class="card-header">Change Password</div>
+          <div class="card-body">
+            <form id="passwordForm" novalidate>
+
+              <div class="form-group">
+                <label class="form-label" for="currentPassword">Current Password</label>
+                <div class="password-field-wrap">
+                  <input type="password" class="form-input" id="currentPassword" placeholder="Enter current password" autocomplete="current-password" />
+                  <span class="password-toggle" data-target="currentPassword">Show</span>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="newPassword">New Password</label>
+                <div class="password-field-wrap">
+                  <input type="password" class="form-input" id="newPassword" placeholder="At least 8 characters" autocomplete="new-password" />
+                  <span class="password-toggle" data-target="newPassword">Show</span>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="confirmPassword">Confirm New Password</label>
+                <div class="password-field-wrap">
+                  <input type="password" class="form-input" id="confirmPassword" placeholder="Repeat new password" autocomplete="new-password" />
+                  <span class="password-toggle" data-target="confirmPassword">Show</span>
+                </div>
+              </div>
+
+              <div style="display:flex; justify-content:flex-end;">
+                <button type="submit" class="btn btn-primary">Update Password</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Preferences -->
+        <div class="card">
+          <div class="card-header">Preferences</div>
+          <div class="card-body">
+
+            <div class="form-group">
+              <label class="form-label">Default recipe visibility</label>
+              <div class="toggle-wrap">
+                <label class="toggle-switch">
+                  <input type="checkbox" id="defaultPublic" />
+                  <span class="toggle-slider"></span>
+                </label>
+                <span class="toggle-label" id="defaultVisibilityLabel">Private</span>
+              </div>
+              <p class="form-hint">When enabled, new recipes will be public by default.</p>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Email notifications</label>
+              <div class="toggle-wrap">
+                <label class="toggle-switch">
+                  <input type="checkbox" id="emailNotif" checked />
+                  <span class="toggle-slider"></span>
+                </label>
+                <span class="toggle-label">Notify me when someone saves my recipe</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Danger Zone -->
+        <div class="card card--danger">
+          <div class="card-header">Danger Zone</div>
+          <div class="card-body">
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:var(--space-md); flex-wrap:wrap;">
+              <div>
+                <div style="font-weight:600; font-size:0.9375rem;">Delete Account</div>
+                <div style="font-size:0.875rem; color:var(--color-text-secondary); margin-top:2px;">
+                  Permanently delete your account and all your recipes. This cannot be undone.
+                </div>
+              </div>
+              <a href="https://app.dande-link.com/form/6a22b5a37eebd3a3f9e69a73" class="btn btn-danger btn-sm" target="_blank" rel="noopener noreferrer">Request Account Deletion</a>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /.profile-main -->
+    </div><!-- /.profile-layout -->
+  </div>
+
+  <!-- ===== Footer ===== -->
+  <footer class="footer">
+    <div class="container footer-inner">
+      <span class="logo">🍴 RecipeBook</span>
+      <p class="footer-text">© 2026 RecipeBook. Share food, share love.</p>
+    </div>
+  </footer>
+
+  <script>
+    // --- Theme ---
+    const html = document.documentElement;
+    const themeToggle = document.getElementById('themeToggle');
+    const savedTheme = localStorage.getItem('rb-theme') || 'light';
+    html.setAttribute('data-theme', savedTheme);
+    themeToggle.textContent = savedTheme === 'dark' ? '🌙' : '☀️';
+
+    themeToggle.addEventListener('click', () => {
+      const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', next);
+      localStorage.setItem('rb-theme', next);
+      themeToggle.textContent = next === 'dark' ? '🌙' : '☀️';
+    });
+
+    // --- Alert helpers ---
+    function showAlert(type, duration = 3500) {
+      const el = document.getElementById(`${type}Alert`);
+      el.style.display = 'block';
+      setTimeout(() => { el.style.display = 'none'; }, duration);
+    }
+
+    // --- Profile form ---
+    document.getElementById('profileForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const bio = document.getElementById('bio').value.trim();
+      document.getElementById('sidebarBio').textContent = bio || '';
+      const first = document.getElementById('firstName').value.trim();
+      const last  = document.getElementById('lastName').value.trim();
+      document.querySelector('.profile-name').textContent = `${first} ${last}`.trim();
+      document.querySelector('.profile-username').textContent = `@${document.getElementById('username').value.trim()}`;
+      try {
+        await api.auth.updateProfile({
+          firstName: first,
+          lastName:  last,
+          username:  document.getElementById('username').value.trim(),
+          email:     document.getElementById('email').value.trim(),
+          bio,
+          website:   document.getElementById('website').value.trim(),
+          instagram: document.getElementById('instagram').value.trim(),
+        });
+        showAlert('success');
+      } catch (err) {
+        document.getElementById('errorAlert').textContent = err.data?.message || 'Failed to save. Please try again.';
+        showAlert('error');
+      }
+    });
+
+    // --- Bio character count ---
+    const bioInput = document.getElementById('bio');
+    const bioCount = document.getElementById('bioCount');
+    function updateBioCount() { bioCount.textContent = bioInput.value.length; }
+    bioInput.addEventListener('input', updateBioCount);
+    updateBioCount();
+
+    // --- Password form ---
+    document.getElementById('passwordForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const newPw  = document.getElementById('newPassword').value;
+      const confPw = document.getElementById('confirmPassword').value;
+      if (newPw.length < 8) {
+        alert('Password must be at least 8 characters.');
+        return;
+      }
+      if (newPw !== confPw) {
+        alert('Passwords do not match.');
+        return;
+      }
+      try {
+        await api.auth.updateProfile({
+          currentPassword: document.getElementById('currentPassword').value,
+          password: newPw,
+        });
+        document.getElementById('passwordForm').reset();
+        showAlert('success');
+      } catch (err) {
+        document.getElementById('errorAlert').textContent = err.data?.message || 'Failed to update password.';
+        showAlert('error');
+      }
+    });
+
+    // --- Show/hide password ---
+    document.querySelectorAll('.password-toggle').forEach(toggle => {
+      toggle.addEventListener('click', () => {
+        const input = document.getElementById(toggle.dataset.target);
+        if (input.type === 'password') {
+          input.type = 'text';
+          toggle.textContent = 'Hide';
+        } else {
+          input.type = 'password';
+          toggle.textContent = 'Show';
+        }
+      });
+    });
+
+    // --- Default visibility preference ---
+    const defaultPublic  = document.getElementById('defaultPublic');
+    const defaultVisLabel = document.getElementById('defaultVisibilityLabel');
+    defaultPublic.addEventListener('change', () => {
+      defaultVisLabel.textContent = defaultPublic.checked ? 'Public' : 'Private';
+    });
+
+    // --- Avatar upload ---
+    document.getElementById('avatarEditBtn').addEventListener('click', () => {
+      document.getElementById('avatarInput').click();
+    });
+
+    document.getElementById('avatarInput').addEventListener('change', async function () {
+      const file = this.files[0];
+      if (!file || !file.type.startsWith('image/')) return;
+      const url = URL.createObjectURL(file);
+      const avatarEl = document.getElementById('sidebarAvatar');
+      avatarEl.style.backgroundImage = `url(${url})`;
+      avatarEl.style.backgroundSize  = 'cover';
+      avatarEl.textContent = '';
+      // Also update nav avatar
+      const navAvatar = document.querySelector('.nav-user .avatar');
+      if (navAvatar) {
+        navAvatar.style.backgroundImage = `url(${url})`;
+        navAvatar.style.backgroundSize  = 'cover';
+        navAvatar.textContent = '';
+      }
+      const fd = new FormData();
+      fd.append('avatar', file);
+      try { await api.auth.updateProfile(fd); }
+      catch (e) { console.error('Avatar upload failed', e); }
+    });
+
+
+  </script>
+  <script src="https://app.dande-link.com/scripts/portalApiClient.js"></script>
+  <script>
+    const api = new PortalApiClient('https://app.dande-link.com');
+
+    const PORTAL_ID = '6a22b4477eebd3a3f9e699a3';
+
+    // --- Load current user and prefill form ---
+    (async () => {
+      try {
+        const [user, dataRes] = await Promise.all([
+          api.auth.verifyToken(),
+          api.auth.getData({ portalId: PORTAL_ID }),
+        ]);
+        if (user.firstName) document.getElementById('firstName').value = user.firstName;
+        if (user.lastName)  document.getElementById('lastName').value  = user.lastName;
+        if (user.username)  document.getElementById('username').value  = user.username;
+        if (user.email)     document.getElementById('email').value     = user.email;
+        if (user.bio)       { document.getElementById('bio').value = user.bio; updateBioCount(); }
+        if (user.website)   document.getElementById('website').value   = user.website;
+        if (user.instagram) document.getElementById('instagram').value = user.instagram;
+        const name    = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email || '';
+        const initial = name[0]?.toUpperCase() || '?';
+        document.querySelector('.profile-name').textContent     = name;
+        document.querySelector('.profile-username').textContent = `@${user.username || ''}`;
+        document.querySelector('.nav-user-name').textContent    = user.firstName || name;
+        document.querySelector('.nav-user .avatar').textContent = initial;
+        document.getElementById('sidebarAvatar').textContent   = initial;
+        if (user.bio) document.getElementById('sidebarBio').textContent = user.bio;
+        // Populate stats from getData response
+        const records = Array.isArray(dataRes) ? dataRes : (dataRes?.data ?? []);
+        document.getElementById('recipesCount').textContent = records.length;
+        if (dataRes?.savesCount !== undefined) document.getElementById('savesCount').textContent = dataRes.savesCount;
+      } catch {
+        window.location.href = 'login.html';
+      }
+    })();
+  </script>
+</body>
+</html>
