@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Footer from '../components/Footer';
 import Navbar from '../components/Navbar';
-import { PORTAL_ID } from '../lib/constants';
+import { PORTAL_ID, FAVORITES_OBJECT_ID } from '../lib/constants';
 import { getApiClient } from '../lib/portalApi';
 
 export default function ProfilePage() {
@@ -11,7 +11,7 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState({
     firstName: '',
     lastName: '',
-    username: '',
+    publicName: '',
     email: '',
     bio: '',
     website: '',
@@ -24,6 +24,8 @@ export default function ProfilePage() {
   });
   const [recipesCount, setRecipesCount] = useState('--');
   const [savesCount, setSavesCount] = useState('--');
+  const [favoritesRecordId, setFavoritesRecordId] = useState(null);
+  const [profileImage, setProfileImage] = useState(null);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
   const [showPw, setShowPw] = useState({ current: false, next: false, confirm: false });
@@ -32,22 +34,36 @@ export default function ProfilePage() {
     (async () => {
       try {
         const api = await getApiClient();
-        const [verified, dataRes] = await Promise.all([
+        const [verified, dataRes, favoritesRes] = await Promise.all([
           api.auth.verifyToken(),
           api.auth.getData({ portalId: PORTAL_ID }),
+          api.auth.getData({ portalId: PORTAL_ID, objectId: FAVORITES_OBJECT_ID, page: 1, limit: 1 }),
         ]);
 
         const name = `${verified.firstName || ''} ${verified.lastName || ''}`.trim() || verified.email || '';
         setUser({ displayName: name, shortName: verified.firstName || name });
+
+        // Extract favorites record (contains profile data)
+        const favRecords = Array.isArray(favoritesRes) ? favoritesRes : favoritesRes?.data ?? [];
+        const favRecord = favRecords[0];
+        if (favRecord?._id) setFavoritesRecordId(favRecord._id);
+
+        // Set profile image URL if available
+        if (favRecord?.data?.profile_image) {
+          setProfileImage(favRecord.data.profile_image);
+        }
+
         setProfile((prev) => ({
           ...prev,
           firstName: verified.firstName || '',
           lastName: verified.lastName || '',
-          username: verified.username || '',
+          publicName: favRecord?.data?.public_name || '',
           email: verified.email || '',
-          bio: verified.bio || '',
-          website: verified.website || '',
-          instagram: verified.instagram || '',
+          bio: favRecord?.data?.bio || '',
+          website: favRecord?.data?.website || '',
+          instagram: favRecord?.data?.instagram || '',
+          defaultPublic: favRecord?.data?.default_recipe_visibility === 'Public',
+          emailNotif: favRecord?.data?.email_notifications ?? true,
         }));
 
         const records = Array.isArray(dataRes) ? dataRes : dataRes?.data ?? [];
@@ -68,15 +84,29 @@ export default function ProfilePage() {
     e.preventDefault();
     try {
       const api = await getApiClient();
+
+      // Update core auth profile fields (name and email only)
       await api.auth.updateProfile({
         firstName: profile.firstName.trim(),
         lastName: profile.lastName.trim(),
-        username: profile.username.trim(),
         email: profile.email.trim(),
-        bio: profile.bio.trim(),
-        website: profile.website.trim(),
-        instagram: profile.instagram.trim(),
       });
+
+      // Update all other fields via favorites object record
+      if (favoritesRecordId) {
+        await api.auth.updateData(favoritesRecordId, {
+          portalId: PORTAL_ID,
+          data: {
+            public_name: profile.publicName.trim(),
+            bio: profile.bio.trim(),
+            website: profile.website.trim(),
+            instagram: profile.instagram.trim(),
+            default_recipe_visibility: profile.defaultPublic ? 'Public' : 'Private',
+            email_notifications: profile.emailNotif,
+          },
+        });
+      }
+
       showAlert(setSuccess, '✓ Changes saved successfully.');
     } catch (err) {
       showAlert(setError, err?.data?.message || 'Failed to save. Please try again.');
@@ -106,13 +136,23 @@ export default function ProfilePage() {
 
   async function onAvatarChange(file) {
     if (!file || !file.type.startsWith('image/')) return;
+    if (!favoritesRecordId) return;
+
     const fd = new FormData();
-    fd.append('avatar', file);
+    fd.append('portalId', PORTAL_ID);
+    fd.append('profile_image', file);
+
     try {
       const api = await getApiClient();
-      await api.auth.updateProfile(fd);
-      showAlert(setSuccess, '✓ Changes saved successfully.');
-    } catch {}
+      const result = await api.auth.updateData(favoritesRecordId, fd);
+      // Update local image state with the new URL
+      if (result?.data?.profile_image) {
+        setProfileImage(result.data.profile_image);
+      }
+      showAlert(setSuccess, '✓ Profile image updated.');
+    } catch (err) {
+      showAlert(setError, err?.data?.message || 'Failed to upload image.');
+    }
   }
 
   const name = `${profile.firstName} ${profile.lastName}`.trim();
@@ -145,7 +185,11 @@ export default function ProfilePage() {
         <div className="profile-layout">
           <aside className="profile-sidebar">
             <div className="profile-avatar-wrap">
-              <div className="avatar avatar--xl" id="sidebarAvatar">{initial}</div>
+              {profileImage ? (
+                <img className="avatar avatar--xl" src={profileImage} alt="Profile" style={{ objectFit: 'cover' }} />
+              ) : (
+                <div className="avatar avatar--xl" id="sidebarAvatar">{initial}</div>
+              )}
               <button className="profile-avatar-edit-btn" type="button" onClick={() => document.getElementById('avatarInput').click()}>✎</button>
               <input
                 id="avatarInput"
@@ -157,7 +201,7 @@ export default function ProfilePage() {
             </div>
 
             <div className="profile-name">{name || user?.displayName || ''}</div>
-            <div className="profile-username">@{profile.username || ''}</div>
+            <div className="profile-username">{profile.publicName || ''}</div>
             <p className="profile-bio" id="sidebarBio">{profile.bio}</p>
 
             <div className="profile-stats">
@@ -186,9 +230,9 @@ export default function ProfilePage() {
                   </div>
 
                   <div className="form-group">
-                    <label className="form-label" htmlFor="username">Username</label>
-                    <input id="username" className="form-input" value={profile.username} onChange={(e) => setProfile((v) => ({ ...v, username: e.target.value }))} />
-                    <span className="form-hint">Your public profile URL: recipebook.app/@janedoe</span>
+                    <label className="form-label" htmlFor="publicName">Public Name</label>
+                    <input id="publicName" className="form-input" value={profile.publicName} onChange={(e) => setProfile((v) => ({ ...v, publicName: e.target.value }))} />
+                    <span className="form-hint">This name will be displayed publicly on your recipes</span>
                   </div>
 
                   <div className="form-group">
@@ -279,6 +323,10 @@ export default function ProfilePage() {
                     </label>
                     <span className="toggle-label">Notify me when someone saves my recipe</span>
                   </div>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 'var(--space-md)' }}>
+                  <button type="button" className="btn btn-primary" onClick={onSaveProfile}>Save Preferences</button>
                 </div>
               </div>
             </div>

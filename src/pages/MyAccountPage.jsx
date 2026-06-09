@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Footer from '../components/Footer';
 import Navbar from '../components/Navbar';
 import RecipeListItem from '../components/RecipeListItem';
-import { PORTAL_ID, RECIPES_OBJECT_ID } from '../lib/constants';
+import { FAVORITES_OBJECT_ID, PORTAL_ID, RECIPES_OBJECT_ID } from '../lib/constants';
 import { getApiClient } from '../lib/portalApi';
 
 const emptyRecipeForm = {
@@ -25,6 +25,7 @@ export default function MyAccountPage() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [recipes, setRecipes] = useState([]);
+  const [favoriteRecipeIds, setFavoriteRecipeIds] = useState([]);
   const [activeTab, setActiveTab] = useState('all');
   const [modalOpen, setModalOpen] = useState(false);
   const [editId, setEditId] = useState('');
@@ -53,14 +54,57 @@ export default function MyAccountPage() {
 
   const filtered = useMemo(() => {
     if (activeTab === 'all') return recipes;
+    if (activeTab === 'favorites') {
+      const favoriteSet = new Set(favoriteRecipeIds);
+      return recipes.filter((recipe) => favoriteSet.has(String(recipe?._id || '')));
+    }
     return recipes.filter((r) => (r.data?.privacy_setting === 'public' ? 'public' : 'private') === activeTab);
-  }, [activeTab, recipes]);
+  }, [activeTab, favoriteRecipeIds, recipes]);
+
+  function toRecipeIdList(records) {
+    const idSet = new Set();
+    const candidateKeys = [
+      'recipes',
+      'savedRecipeId',
+      'recipeId',
+      'recipe_id',
+      'favoriteRecipeId',
+      'favouriteRecipeId',
+      'recipeIds',
+      'savedRecipeIds',
+    ];
+
+    records.forEach((record) => {
+      const data = record?.data || record || {};
+      candidateKeys.forEach((key) => {
+        const value = data[key];
+        if (Array.isArray(value)) {
+          value.forEach((entry) => {
+            if (entry !== null && entry !== undefined && String(entry).trim()) {
+              idSet.add(String(entry));
+            }
+          });
+          return;
+        }
+        if (value !== null && value !== undefined && String(value).trim()) {
+          idSet.add(String(value));
+        }
+      });
+    });
+
+    return Array.from(idSet);
+  }
 
   async function loadRecipes(apiClient) {
     const api = apiClient || (await getApiClient());
-    const data = await api.auth.getData({ portalId: PORTAL_ID, objectId: RECIPES_OBJECT_ID, page: 1, limit: 100 });
-    const records = Array.isArray(data) ? data : data?.data || data?.records || [];
+    const [recipesData, favoritesData] = await Promise.all([
+      api.auth.getData({ portalId: PORTAL_ID, objectId: RECIPES_OBJECT_ID, page: 1, limit: 100 }),
+      api.auth.getData({ portalId: PORTAL_ID, objectId: FAVORITES_OBJECT_ID, page: 1, limit: 500 }),
+    ]);
+    const records = Array.isArray(recipesData) ? recipesData : recipesData?.data || recipesData?.records || [];
+    const favoriteRecords = Array.isArray(favoritesData) ? favoritesData : favoritesData?.data || favoritesData?.records || [];
     setRecipes(records);
+    setFavoriteRecipeIds(toRecipeIdList(favoriteRecords));
   }
 
   function openNewModal() {
@@ -184,6 +228,10 @@ export default function MyAccountPage() {
   const publicCount = recipes.filter((r) => r.data?.privacy_setting === 'public').length;
   const privateCount = recipes.length - publicCount;
   const savesCount = recipes.reduce((sum, r) => sum + (r.data?.savedCount || r.data?.savesCount || r.data?.savedBy?.length || 0), 0);
+  const favoritesCount = useMemo(() => {
+    const favoriteSet = new Set(favoriteRecipeIds);
+    return recipes.filter((recipe) => favoriteSet.has(String(recipe?._id || ''))).length;
+  }, [favoriteRecipeIds, recipes]);
 
   return (
     <>
@@ -220,6 +268,7 @@ export default function MyAccountPage() {
           <button className={`tab-btn ${activeTab === 'all' ? 'active' : ''}`} type="button" onClick={() => setActiveTab('all')}>All</button>
           <button className={`tab-btn ${activeTab === 'public' ? 'active' : ''}`} type="button" onClick={() => setActiveTab('public')}>Public</button>
           <button className={`tab-btn ${activeTab === 'private' ? 'active' : ''}`} type="button" onClick={() => setActiveTab('private')}>Private</button>
+          <button className={`tab-btn ${activeTab === 'favorites' ? 'active' : ''}`} type="button" onClick={() => setActiveTab('favorites')}>Favorites ({favoritesCount})</button>
         </div>
 
         <div className="recipe-list" id="recipeList">

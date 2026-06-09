@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import Footer from '../components/Footer';
 import Navbar from '../components/Navbar';
 import RecipeCard from '../components/RecipeCard';
-import { API_BASE, PUBLIC_CATEGORIES_OBJECT_ID, PUBLIC_RECIPES_OBJECT_ID } from '../lib/constants';
-import { getVerifiedUser } from '../lib/portalApi';
+import { API_BASE, FAVORITES_OBJECT_ID, PORTAL_ID, PUBLIC_CATEGORIES_OBJECT_ID, PUBLIC_RECIPES_OBJECT_ID } from '../lib/constants';
+import { getApiClient, getVerifiedUser } from '../lib/portalApi';
 
 function toUser(user) {
   const displayName = user?.name || user?.firstName || user?.email || '';
@@ -23,10 +23,56 @@ export default function HomePage() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [page, setPage] = useState(1);
   const [canLoadMore, setCanLoadMore] = useState(true);
+  const [favoriteIds, setFavoriteIds] = useState(new Set());
+  const [favoritesRecordId, setFavoritesRecordId] = useState(null);
+  const [favoriteLoading, setFavoriteLoading] = useState(new Set());
 
   useEffect(() => {
-    getVerifiedUser().then((u) => setUser(toUser(u))).catch(() => {});
+    getVerifiedUser().then((u) => {
+      setUser(toUser(u));
+      if (u) loadFavorites();
+    }).catch(() => {});
   }, []);
+
+  async function loadFavorites() {
+    try {
+      const api = await getApiClient();
+      const data = await api.auth.getData({ portalId: PORTAL_ID, objectId: FAVORITES_OBJECT_ID, page: 1, limit: 1 });
+      const records = Array.isArray(data) ? data : data?.data || data?.records || [];
+      const record = records[0];
+      if (record) {
+        setFavoritesRecordId(record._id);
+        const recipesArr = record?.data?.recipes || [];
+        setFavoriteIds(new Set(recipesArr.map(String)));
+      }
+    } catch {}
+  }
+
+  async function toggleFavorite(recipeId) {
+    if (favoriteLoading.has(recipeId)) return;
+    if (!favoritesRecordId) return;
+    setFavoriteLoading((prev) => new Set(prev).add(recipeId));
+    const isFav = favoriteIds.has(recipeId);
+    const newIds = new Set(favoriteIds);
+    if (isFav) {
+      newIds.delete(recipeId);
+    } else {
+      newIds.add(recipeId);
+    }
+    try {
+      const api = await getApiClient();
+      await api.auth.updateData(favoritesRecordId, {
+        portalId: PORTAL_ID,
+        data: { recipes: Array.from(newIds) },
+      });
+      setFavoriteIds(newIds);
+    } catch {}
+    setFavoriteLoading((prev) => {
+      const next = new Set(prev);
+      next.delete(recipeId);
+      return next;
+    });
+  }
 
   useEffect(() => {
     fetch(`${API_BASE}/public-data/${PUBLIC_CATEGORIES_OBJECT_ID}`)
@@ -162,7 +208,12 @@ export default function HomePage() {
 
         <div className="recipes-grid">
           {filtered.map((recipe) => (
-            <RecipeCard key={recipe._id} recipe={recipe} />
+            <RecipeCard
+              key={recipe._id}
+              recipe={recipe}
+              isFavorite={favoriteIds.has(recipe._id)}
+              onToggleFavorite={user ? toggleFavorite : undefined}
+            />
           ))}
         </div>
 

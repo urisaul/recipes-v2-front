@@ -488,6 +488,29 @@ body {
 .recipe-badge--medium { background: var(--color-warning-bg);  color: var(--color-warning-text); }
 .recipe-badge--hard   { background: var(--color-danger-bg);   color: var(--color-danger-text); }
 
+/* Favorite button on card */
+.recipe-card-fav-btn {
+  position: absolute;
+  top: var(--space-sm);
+  right: var(--space-sm);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--color-danger);
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px var(--color-shadow-md);
+  transition: transform 0.15s ease, background 0.15s ease;
+  z-index: 2;
+}
+.recipe-card-fav-btn:hover {
+  transform: scale(1.1);
+  background: #fff;
+}
+
 /* Private badge (top-right) */
 .recipe-badge-private {
   position: absolute;

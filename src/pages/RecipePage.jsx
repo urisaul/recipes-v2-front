@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import Footer from '../components/Footer';
 import Navbar from '../components/Navbar';
-import { API_BASE, PUBLIC_CATEGORIES_OBJECT_ID, PUBLIC_RECIPES_OBJECT_ID } from '../lib/constants';
+import { API_BASE, FAVORITES_OBJECT_ID, PORTAL_ID, PUBLIC_CATEGORIES_OBJECT_ID, PUBLIC_RECIPES_OBJECT_ID } from '../lib/constants';
 import { getApiClient, getVerifiedUser } from '../lib/portalApi';
 
 const diffClass = { easy: 'easy', medium: 'medium', hard: 'hard', advanced: 'hard' };
@@ -25,6 +25,8 @@ export default function RecipePage() {
   const [servings, setServings] = useState(4);
   const [baseServings, setBaseServings] = useState(4);
   const [copyLabel, setCopyLabel] = useState('Copy');
+  const [favoritesRecordId, setFavoritesRecordId] = useState(null);
+  const [favoriteRecipes, setFavoriteRecipes] = useState([]);
 
   useEffect(() => {
     getVerifiedUser()
@@ -33,9 +35,27 @@ export default function RecipePage() {
         if (name) {
           setUser({ displayName: name, shortName: u?.firstName || name });
         }
+        if (u) loadUserFavorites();
       })
       .catch(() => {});
   }, []);
+
+  async function loadUserFavorites() {
+    try {
+      const api = await getApiClient();
+      const data = await api.auth.getData({ portalId: PORTAL_ID, objectId: FAVORITES_OBJECT_ID, page: 1, limit: 1 });
+      const records = Array.isArray(data) ? data : data?.data || data?.records || [];
+      const record = records[0];
+      if (record) {
+        setFavoritesRecordId(record._id);
+        const recipesArr = record?.data?.recipes || [];
+        setFavoriteRecipes(recipesArr.map(String));
+        if (id && recipesArr.map(String).includes(id)) {
+          setSaveOn(true);
+        }
+      }
+    } catch {}
+  }
 
   useEffect(() => {
     (async () => {
@@ -72,16 +92,21 @@ export default function RecipePage() {
   const steps = useMemo(() => (Array.isArray(p.instructions) ? p.instructions : p.instructions ? p.instructions.split('\n').filter(Boolean) : []), [p.instructions]);
 
   async function onToggleSave() {
+    if (!favoritesRecordId || !id) return;
     const next = !saveOn;
     setSaveOn(next);
-    if (!id || !next) {
-      return;
-    }
+    const newRecipes = next
+      ? [...favoriteRecipes.filter((r) => r !== id), id]
+      : favoriteRecipes.filter((r) => r !== id);
     try {
       const api = await getApiClient();
-      await api.auth.createData({ savedRecipeId: id });
+      await api.auth.updateData(favoritesRecordId, {
+        portalId: PORTAL_ID,
+        data: { recipes: newRecipes },
+      });
+      setFavoriteRecipes(newRecipes);
     } catch {
-      setSaveOn(false);
+      setSaveOn(!next);
     }
   }
 
