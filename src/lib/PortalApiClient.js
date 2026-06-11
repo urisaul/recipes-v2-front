@@ -122,10 +122,16 @@ class PortalApiClient {
 
       /**
        * GET /portal-auth/data
-       * @param {object} [params] - query params (e.g. { objectId, page, limit })
+       * @param {object} [params] - query params (e.g. { objectId, page, limit, sort })
+       * @param {Array<{field: string, order: 'asc'|'desc'}>} [params.sort] - sort array (will be JSON stringified)
        */
-      getData: (params) =>
-        req('GET', `${BASE}/data`, { params }),
+      getData: (params) => {
+        const finalParams = { ...params };
+        if (Array.isArray(finalParams.sort)) {
+          finalParams.sort = JSON.stringify(finalParams.sort);
+        }
+        return req('GET', `${BASE}/data`, { params: finalParams });
+      },
 
       /**
        * GET /portal-auth/datas/related/:objectId

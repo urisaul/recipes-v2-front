@@ -27,6 +27,7 @@ export default function MyAccountPage() {
   const [recipes, setRecipes] = useState([]);
   const [favoriteRecipeIds, setFavoriteRecipeIds] = useState([]);
   const [activeTab, setActiveTab] = useState('all');
+  const [sort, setSort] = useState('newest');
   const [modalOpen, setModalOpen] = useState(false);
   const [editId, setEditId] = useState('');
   const [imageFile, setImageFile] = useState(null);
@@ -95,10 +96,18 @@ export default function MyAccountPage() {
     return Array.from(idSet);
   }
 
-  async function loadRecipes(apiClient) {
+  async function loadRecipes(apiClient, sortValue) {
     const api = apiClient || (await getApiClient());
+    const currentSort = sortValue || sort;
+    const sortParam = currentSort === 'newest'
+      ? [{ field: 'creation_date', order: 'desc' }]
+      : currentSort === 'oldest'
+        ? [{ field: 'creation_date', order: 'asc' }]
+        : currentSort === 'name-asc'
+          ? [{ field: 'recipe_name', order: 'asc' }]
+          : [{ field: 'recipe_name', order: 'desc' }];
     const [recipesData, favoritesData] = await Promise.all([
-      api.auth.getData({ portalId: PORTAL_ID, objectId: RECIPES_OBJECT_ID, page: 1, limit: 100 }),
+      api.auth.getData({ portalId: PORTAL_ID, objectId: RECIPES_OBJECT_ID, page: 1, limit: 100, sort: sortParam }),
       api.auth.getData({ portalId: PORTAL_ID, objectId: FAVORITES_OBJECT_ID, page: 1, limit: 500 }),
     ]);
     const records = Array.isArray(recipesData) ? recipesData : recipesData?.data || recipesData?.records || [];
@@ -264,11 +273,19 @@ export default function MyAccountPage() {
           <div className="stat-card"><div className="stat-card-value">{savesCount}</div><div className="stat-card-label">Saves by others</div></div>
         </div>
 
-        <div className="tabs" role="tablist">
+        <div className="section-header">
+          <div className="tabs" role="tablist">
           <button className={`tab-btn ${activeTab === 'all' ? 'active' : ''}`} type="button" onClick={() => setActiveTab('all')}>All</button>
           <button className={`tab-btn ${activeTab === 'public' ? 'active' : ''}`} type="button" onClick={() => setActiveTab('public')}>Public</button>
           <button className={`tab-btn ${activeTab === 'private' ? 'active' : ''}`} type="button" onClick={() => setActiveTab('private')}>Private</button>
           <button className={`tab-btn ${activeTab === 'favorites' ? 'active' : ''}`} type="button" onClick={() => setActiveTab('favorites')}>Favorites ({favoritesCount})</button>
+          </div>
+          <select className="sort-select" aria-label="Sort recipes" value={sort} onChange={(e) => { setSort(e.target.value); loadRecipes(null, e.target.value); }}>
+            <option value="newest">Newest first</option>
+            <option value="oldest">Oldest first</option>
+            <option value="name-asc">Name (A-Z)</option>
+            <option value="name-desc">Name (Z-A)</option>
+          </select>
         </div>
 
         <div className="recipe-list" id="recipeList">
