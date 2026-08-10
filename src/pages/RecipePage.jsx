@@ -14,6 +14,46 @@ function scaleIngredient(text, factor) {
   });
 }
 
+function parseMarkdown(text) {
+  if (!text) return text;
+  const parts = text.split(/(\*[^*]+\*)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith('*') && part.endsWith('*')) {
+      return <strong key={i}>{part.slice(1, -1)}</strong>;
+    }
+    return part;
+  });
+}
+
+function normalizeRecipeIds(value) {
+  const idSet = new Set();
+
+  function add(nextValue) {
+    if (nextValue === null || nextValue === undefined) return;
+
+    if (Array.isArray(nextValue)) {
+      nextValue.forEach(add);
+      return;
+    }
+
+    if (typeof nextValue === 'object') {
+      ['_id', 'id', 'recipeId', 'recipe_id'].forEach((key) => {
+        if (key in nextValue) add(nextValue[key]);
+      });
+      return;
+    }
+
+    String(nextValue)
+      .split(/[\n,]/)
+      .map((part) => part.trim())
+      .filter(Boolean)
+      .forEach((idValue) => idSet.add(idValue));
+  }
+
+  add(value);
+  return Array.from(idSet);
+}
+
 export default function RecipePage() {
   const { id } = useParams();
   const [user, setUser] = useState(null);
@@ -48,9 +88,9 @@ export default function RecipePage() {
       const record = records[0];
       if (record) {
         setFavoritesRecordId(record._id);
-        const recipesArr = record?.data?.recipes || [];
-        setFavoriteRecipes(recipesArr.map(String));
-        if (id && recipesArr.map(String).includes(id)) {
+        const recipeIds = normalizeRecipeIds(record?.data?.recipes || []);
+        setFavoriteRecipes(recipeIds);
+        if (id && recipeIds.includes(id)) {
           setSaveOn(true);
         }
       }
@@ -211,13 +251,13 @@ export default function RecipePage() {
                 {tags.map((tag) => <span key={tag} className="tag-pill active" style={{ pointerEvents: 'none' }}>{tag}</span>)}
               </div>
 
-              <p className="recipe-description">{p.description || ''}</p>
+              <p className="recipe-description">{parseMarkdown(p.description || '')}</p>
 
               <section className="content-section">
                 <h2 className="content-section-title">Ingredients</h2>
                 <ul className="ingredients-list">
                   {ingredients.map((ing) => (
-                    <li key={ing} className="ingredient-item"><input type="checkbox" className="ingredient-check" aria-label="Check off ingredient" /><span>{ing}</span></li>
+                    <li key={ing} className="ingredient-item"><input type="checkbox" className="ingredient-check" aria-label="Check off ingredient" /><span>{parseMarkdown(ing)}</span></li>
                   ))}
                 </ul>
               </section>
@@ -226,7 +266,7 @@ export default function RecipePage() {
                 <h2 className="content-section-title">Instructions</h2>
                 <ol className="steps-list">
                   {steps.map((step, i) => (
-                    <li key={`${step}-${i}`} className="step-item"><div className="step-number">{i + 1}</div><p className="step-text">{step}</p></li>
+                    <li key={`${step}-${i}`} className="step-item"><div className="step-number">{i + 1}</div><p className="step-text">{parseMarkdown(step)}</p></li>
                   ))}
                 </ol>
               </section>

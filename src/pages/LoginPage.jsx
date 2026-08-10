@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Footer from '../components/Footer';
 import Navbar from '../components/Navbar';
+import { PORTAL_ID } from '../lib/constants';
 import { getApiClient } from '../lib/portalApi';
 
 export default function LoginPage() {
@@ -26,7 +27,7 @@ export default function LoginPage() {
 
     try {
       const api = await getApiClient();
-      await api.auth.login({ email: email.trim(), password });
+      await api.auth.login({ portalId: PORTAL_ID, email: email.trim(), password });
       navigate('/my-account');
     } catch (err) {
       console.error('Login error:', err);

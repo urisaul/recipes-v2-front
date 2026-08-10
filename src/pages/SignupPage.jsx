@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Footer from '../components/Footer';
 import Navbar from '../components/Navbar';
+import { PORTAL_ID } from '../lib/constants';
 import { getApiClient } from '../lib/portalApi';
 
 export default function SignupPage() {
@@ -34,17 +35,21 @@ export default function SignupPage() {
     setSubmitted(true);
     setError('');
 
-    const valid = form.firstName.trim() && form.username.trim().length >= 3 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim()) && form.password.length >= 8 && form.password === form.confirmPassword;
+    const valid = form.firstName.trim()
+      && form.lastName.trim()
+      && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())
+      && form.password.length >= 8
+      && form.password === form.confirmPassword;
     if (!valid) {
       return;
     }
 
     try {
       const api = await getApiClient();
-      await api.auth.registerIndependent({
+      await api.signup({
+        portalId: PORTAL_ID,
         firstName: form.firstName.trim(),
         lastName: form.lastName.trim(),
-        username: form.username.trim(),
         email: form.email.trim(),
         password: form.password,
       });
@@ -80,15 +85,15 @@ export default function SignupPage() {
               </div>
               <div className="form-group">
                 <label className="form-label" htmlFor="lastName">Last Name</label>
-                <input id="lastName" type="text" className="form-input" placeholder="Doe" value={form.lastName} onChange={(e) => setForm((v) => ({ ...v, lastName: e.target.value }))} />
+                <input id="lastName" type="text" className="form-input" placeholder="Doe" value={form.lastName} onChange={(e) => setForm((v) => ({ ...v, lastName: e.target.value }))} required />
+                <span className="form-error" style={{ display: submitted && !form.lastName.trim() ? 'block' : 'none' }}>Required.</span>
               </div>
             </div>
 
             <div className="form-group">
               <label className="form-label" htmlFor="username">Username</label>
-              <input id="username" type="text" className="form-input" placeholder="janedoe" value={form.username} onChange={(e) => setForm((v) => ({ ...v, username: e.target.value }))} required />
+              <input id="username" type="text" className="form-input" placeholder="janedoe" value={form.username} onChange={(e) => setForm((v) => ({ ...v, username: e.target.value }))} />
               <span className="form-hint">This will be your public profile URL.</span>
-              <span className="form-error" style={{ display: submitted && form.username.trim().length < 3 ? 'block' : 'none' }}>Username is required and must be at least 3 characters.</span>
             </div>
 
             <div className="form-group">

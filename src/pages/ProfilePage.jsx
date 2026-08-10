@@ -2,8 +2,48 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Footer from '../components/Footer';
 import Navbar from '../components/Navbar';
-import { PORTAL_ID, FAVORITES_OBJECT_ID } from '../lib/constants';
+import { PORTAL_ID, FAVORITES_OBJECT_ID, RECIPES_OBJECT_ID } from '../lib/constants';
 import { getApiClient } from '../lib/portalApi';
+
+function countSavedRecipes(records) {
+  const idSet = new Set();
+
+  function addId(value) {
+    if (value === null || value === undefined) return;
+
+    if (Array.isArray(value)) {
+      value.forEach(addId);
+      return;
+    }
+
+    if (typeof value === 'object') {
+      ['_id', 'id', 'recipeId', 'recipe_id', 'savedRecipeId', 'favoriteRecipeId', 'favouriteRecipeId'].forEach((key) => {
+        if (key in value) addId(value[key]);
+      });
+      return;
+    }
+
+    String(value)
+      .split(/[\n,]/)
+      .map((part) => part.trim())
+      .filter(Boolean)
+      .forEach((id) => idSet.add(id));
+  }
+
+  records.forEach((record) => {
+    const data = record?.data || record || {};
+    addId(data.recipes);
+    addId(data.savedRecipeId);
+    addId(data.recipeId);
+    addId(data.recipe_id);
+    addId(data.favoriteRecipeId);
+    addId(data.favouriteRecipeId);
+    addId(data.recipeIds);
+    addId(data.savedRecipeIds);
+  });
+
+  return idSet.size;
+}
 
 export default function ProfilePage() {
   const navigate = useNavigate();
@@ -29,6 +69,7 @@ export default function ProfilePage() {
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
   const [showPw, setShowPw] = useState({ current: false, next: false, confirm: false });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
@@ -36,7 +77,7 @@ export default function ProfilePage() {
         const api = await getApiClient();
         const [verified, dataRes, favoritesRes] = await Promise.all([
           api.auth.verifyToken(),
-          api.auth.getData({ portalId: PORTAL_ID }),
+          api.auth.getData({ portalId: PORTAL_ID, objectId: RECIPES_OBJECT_ID, page: 1, limit: 100 }),
           api.auth.getData({ portalId: PORTAL_ID, objectId: FAVORITES_OBJECT_ID, page: 1, limit: 1 }),
         ]);
 
@@ -67,8 +108,10 @@ export default function ProfilePage() {
         }));
 
         const records = Array.isArray(dataRes) ? dataRes : dataRes?.data ?? [];
-        setRecipesCount(records.length);
-        if (dataRes?.savesCount !== undefined) setSavesCount(dataRes.savesCount);
+        const totalRecipes = typeof dataRes?.pagination?.total === 'number' ? dataRes.pagination.total : records.length;
+        setRecipesCount(totalRecipes);
+        setSavesCount(countSavedRecipes(favRecords));
+        setLoading(false);
       } catch {
         navigate('/login');
       }
@@ -80,36 +123,50 @@ export default function ProfilePage() {
     window.setTimeout(() => setter(''), 3500);
   }
 
-  async function onSaveProfile(e) {
+  async function onSaveUserProperties(e) {
     e.preventDefault();
     try {
       const api = await getApiClient();
 
-      // Update core auth profile fields (name and email only)
+      // Update core auth profile fields only.
       await api.auth.updateProfile({
         firstName: profile.firstName.trim(),
         lastName: profile.lastName.trim(),
         email: profile.email.trim(),
       });
 
-      // Update all other fields via favorites object record
-      if (favoritesRecordId) {
-        await api.auth.updateData(favoritesRecordId, {
-          portalId: PORTAL_ID,
-          data: {
-            public_name: profile.publicName.trim(),
-            bio: profile.bio.trim(),
-            website: profile.website.trim(),
-            instagram: profile.instagram.trim(),
-            default_recipe_visibility: profile.defaultPublic ? 'Public' : 'Private',
-            email_notifications: profile.emailNotif,
-          },
-        });
-      }
-
-      showAlert(setSuccess, '✓ Changes saved successfully.');
+      showAlert(setSuccess, '✓ User details saved successfully.');
     } catch (err) {
-      showAlert(setError, err?.data?.message || 'Failed to save. Please try again.');
+      showAlert(setError, err?.data?.message || 'Failed to save user details. Please try again.');
+    }
+  }
+
+  async function onSaveAccountSettings(e) {
+    e.preventDefault();
+    if (!favoritesRecordId) {
+      showAlert(setError, 'Account settings record not found. Please refresh and try again.');
+      return;
+    }
+
+    try {
+      const api = await getApiClient();
+
+      // Update account-level settings via favorites object record.
+      await api.auth.updateData(favoritesRecordId, {
+        portalId: PORTAL_ID,
+        data: {
+          public_name: profile.publicName.trim(),
+          bio: profile.bio.trim(),
+          website: profile.website.trim(),
+          instagram: profile.instagram.trim(),
+          default_recipe_visibility: profile.defaultPublic ? 'Public' : 'Private',
+          email_notifications: profile.emailNotif,
+        },
+      });
+
+      showAlert(setSuccess, '✓ Account settings saved successfully.');
+    } catch (err) {
+      showAlert(setError, err?.data?.message || 'Failed to save account settings. Please try again.');
     }
   }
 
@@ -182,6 +239,11 @@ export default function ProfilePage() {
       </div>
 
       <div className="container page-content">
+        {loading ? (
+          <div className="recipes-loader" aria-label="Loading profile" role="status">
+            <span className="recipes-loader__spinner" />
+          </div>
+        ) : (
         <div className="profile-layout">
           <aside className="profile-sidebar">
             <div className="profile-avatar-wrap">
@@ -215,9 +277,9 @@ export default function ProfilePage() {
             {error ? <div className="alert alert--error" style={{ display: 'block' }}>{error}</div> : null}
 
             <div className="card">
-              <div className="card-header">Edit Profile</div>
+              <div className="card-header">User Properties</div>
               <div className="card-body">
-                <form onSubmit={onSaveProfile} noValidate>
+                <form onSubmit={onSaveUserProperties} noValidate>
                   <div className="form-row">
                     <div className="form-group">
                       <label className="form-label" htmlFor="firstName">First Name</label>
@@ -240,9 +302,26 @@ export default function ProfilePage() {
                     <input id="email" type="email" className="form-input" value={profile.email} onChange={(e) => setProfile((v) => ({ ...v, email: e.target.value }))} />
                   </div>
 
+                  <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                    <button type="submit" className="btn btn-primary">Save User Properties</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            <div className="card">
+              <div className="card-header">Account Settings</div>
+              <div className="card-body">
+                <form onSubmit={onSaveAccountSettings} noValidate>
                   <div className="form-group">
-                    <label className="form-label" htmlFor="bio">Bio</label>
-                    <textarea id="bio" className="form-textarea" rows="3" maxLength="200" value={profile.bio} onChange={(e) => setProfile((v) => ({ ...v, bio: e.target.value }))} placeholder="Tell others a bit about your cooking style..." />
+                    <label className="form-label" htmlFor="publicName">Public Name</label>
+                    <input id="publicName" className="form-input" value={profile.publicName} onChange={(e) => setProfile((v) => ({ ...v, publicName: e.target.value }))} />
+                    <span className="form-hint">This name will be displayed publicly on your recipes</span>
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="settingsBio">Bio</label>
+                    <textarea id="settingsBio" className="form-textarea" rows="3" maxLength="200" value={profile.bio} onChange={(e) => setProfile((v) => ({ ...v, bio: e.target.value }))} placeholder="Tell others a bit about your cooking style..." />
                     <span className="form-hint"><span>{profile.bio.length}</span>/200 characters</span>
                   </div>
 
@@ -257,9 +336,32 @@ export default function ProfilePage() {
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                    <button type="submit" className="btn btn-primary">Save Profile</button>
+                <div className="form-group">
+                  <label className="form-label">Default recipe visibility</label>
+                  <div className="toggle-wrap">
+                    <label className="toggle-switch">
+                      <input type="checkbox" checked={profile.defaultPublic} onChange={(e) => setProfile((v) => ({ ...v, defaultPublic: e.target.checked }))} />
+                      <span className="toggle-slider" />
+                    </label>
+                    <span className="toggle-label">{profile.defaultPublic ? 'Public' : 'Private'}</span>
                   </div>
+                  <p className="form-hint">When enabled, new recipes will be public by default.</p>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Email notifications</label>
+                  <div className="toggle-wrap">
+                    <label className="toggle-switch">
+                      <input type="checkbox" checked={profile.emailNotif} onChange={(e) => setProfile((v) => ({ ...v, emailNotif: e.target.checked }))} />
+                      <span className="toggle-slider" />
+                    </label>
+                    <span className="toggle-label">Notify me when someone saves my recipe</span>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 'var(--space-md)' }}>
+                  <button type="submit" className="btn btn-primary">Save Account Settings</button>
+                </div>
                 </form>
               </div>
             </div>
@@ -299,38 +401,6 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            <div className="card">
-              <div className="card-header">Preferences</div>
-              <div className="card-body">
-                <div className="form-group">
-                  <label className="form-label">Default recipe visibility</label>
-                  <div className="toggle-wrap">
-                    <label className="toggle-switch">
-                      <input type="checkbox" checked={profile.defaultPublic} onChange={(e) => setProfile((v) => ({ ...v, defaultPublic: e.target.checked }))} />
-                      <span className="toggle-slider" />
-                    </label>
-                    <span className="toggle-label">{profile.defaultPublic ? 'Public' : 'Private'}</span>
-                  </div>
-                  <p className="form-hint">When enabled, new recipes will be public by default.</p>
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">Email notifications</label>
-                  <div className="toggle-wrap">
-                    <label className="toggle-switch">
-                      <input type="checkbox" checked={profile.emailNotif} onChange={(e) => setProfile((v) => ({ ...v, emailNotif: e.target.checked }))} />
-                      <span className="toggle-slider" />
-                    </label>
-                    <span className="toggle-label">Notify me when someone saves my recipe</span>
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 'var(--space-md)' }}>
-                  <button type="button" className="btn btn-primary" onClick={onSaveProfile}>Save Preferences</button>
-                </div>
-              </div>
-            </div>
-
             <div className="card card--danger">
               <div className="card-header">Danger Zone</div>
               <div className="card-body">
@@ -345,6 +415,7 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
+        )}
       </div>
 
       <Footer />

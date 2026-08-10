@@ -12,6 +12,35 @@ function toUser(user) {
     : null;
 }
 
+function normalizeRecipeIds(value) {
+  const idSet = new Set();
+
+  function add(nextValue) {
+    if (nextValue === null || nextValue === undefined) return;
+
+    if (Array.isArray(nextValue)) {
+      nextValue.forEach(add);
+      return;
+    }
+
+    if (typeof nextValue === 'object') {
+      ['_id', 'id', 'recipeId', 'recipe_id'].forEach((key) => {
+        if (key in nextValue) add(nextValue[key]);
+      });
+      return;
+    }
+
+    String(nextValue)
+      .split(/[\n,]/)
+      .map((part) => part.trim())
+      .filter(Boolean)
+      .forEach((id) => idSet.add(id));
+  }
+
+  add(value);
+  return Array.from(idSet);
+}
+
 export default function HomePage() {
   const [user, setUser] = useState(null);
   const [search, setSearch] = useState('');
@@ -42,8 +71,7 @@ export default function HomePage() {
       const record = records[0];
       if (record) {
         setFavoritesRecordId(record._id);
-        const recipesArr = record?.data?.recipes || [];
-        setFavoriteIds(new Set(recipesArr.map(String)));
+        setFavoriteIds(new Set(normalizeRecipeIds(record?.data?.recipes || [])));
       }
     } catch {}
   }

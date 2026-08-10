@@ -4,7 +4,7 @@ const diffClass = { easy: 'easy', medium: 'medium', hard: 'hard', advanced: 'har
 
 export default function RecipeCard({ recipe, isFavorite, onToggleFavorite }) {
   const p = recipe.properties || {};
-  const img = p.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=260&fit=crop';
+  const img = p.image || 'https://images.unsplash.com/vector-1762854783600-6aaf7761e42e?q=80&w=1074&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D' || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=260&fit=crop';
   const total = (parseInt(p.prep_time_minutes, 10) || 0) + (parseInt(p.cook_time_minutes, 10) || 0);
   const timeStr = total ? `${total} min` : '';
   const servings = p.servings ? `${p.servings} servings` : '';
